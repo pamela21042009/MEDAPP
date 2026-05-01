@@ -47,7 +47,7 @@ def main() -> int:
         return 1
 
     auth = AuthService()
-    password_hash = auth._hash_password(password)  # noqa: SLF001 - usar el hash vigente del sistema.
+    password_hash = auth._hash_password(password)  
     existing = db.select("users", "id,email", {"email": email})
     data = {
         "full_name": name,

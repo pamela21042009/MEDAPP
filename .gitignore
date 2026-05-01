@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+.env
+.venv/
+venv/
+
+node_modules/
+dist/
+
+tmp_chrome_profile/
+tmp_edge_profile*/
+medapp/docs/_tmp/

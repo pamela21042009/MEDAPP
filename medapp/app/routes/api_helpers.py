@@ -1,0 +1,143 @@
+from __future__ import annotations
+
+from datetime import date, datetime, timedelta
+from typing import Any
+
+from flask import jsonify, request, session
+
+from app.services.database import DatabaseService
+
+
+STATUS_LABELS = {
+    "pending": "Pendiente",
+    "confirmed": "Confirmada",
+    "cancelled": "Cancelada",
+    "completed": "Atendida",
+    "no_show": "No asistida",
+    "rescheduled": "Reprogramada",
+    "paid": "Pagado",
+    "refunded": "Reembolsado",
+}
+
+
+def db() -> DatabaseService:
+    return DatabaseService.get_instance()
+
+
+def payload() -> dict[str, Any]:
+    return request.get_json(silent=True) or {}
+
+
+def ok(data: Any = None, **extra: Any):
+    if isinstance(data, dict):
+        body = {**data, **extra}
+    elif data is None:
+        body = {**extra} if extra else {"ok": True}
+    else:
+        body = {"items": data, **extra}
+    return jsonify(body)
+
+
+def fail(message: str, status: int = 400):
+    return jsonify({"error": message}), status
+
+
+def current_user() -> dict[str, Any]:
+    role = session.get("user_role", "staff")
+    return {
+        "id": session.get("user_id"),
+        "name": session.get("user_name", "Usuario"),
+        "full_name": session.get("user_name", "Usuario"),
+        "role": role,
+        "email": session.get("user_email", ""),
+    }
+
+
+def role() -> str:
+    return str(session.get("user_role") or "staff")
+
+
+def can_manage() -> bool:
+    return role() in {"admin", "staff", "secretaria"}
+
+
+def select(table: str, columns: str = "*", filters: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    return db().select(table, columns, filters or {})
+
+
+def by_id(table: str, item_id: int, columns: str = "*") -> dict[str, Any] | None:
+    rows = select(table, columns, {"id": item_id})
+    return rows[0] if rows else None
+
+
+def insert(table: str, data: dict[str, Any]):
+    return db().insert(table, data)
+
+
+def update(table: str, item_id: int, data: dict[str, Any]):
+    return db().update(table, data, {"id": item_id})
+
+
+def delete(table: str, item_id: int) -> bool:
+    return db().delete(table, {"id": item_id})
+
+
+def doctors() -> list[dict[str, Any]]:
+    return select("doctors", "*")
+
+
+def patients() -> list[dict[str, Any]]:
+    return select("patients", "*")
+
+
+def appointments() -> list[dict[str, Any]]:
+    return select("appointments", "*")
+
+
+def payments() -> list[dict[str, Any]]:
+    return select("payments", "*")
+
+
+def specialties() -> list[str]:
+    values = []
+    for item in doctors():
+        specialty = item.get("specialty")
+        if specialty and specialty not in values:
+            values.append(specialty)
+    return sorted(values)
+
+
+def payment_stats(items: list[dict[str, Any]]) -> dict[str, Any]:
+    paid = [item for item in items if item.get("status") == "paid"]
+    pending = [item for item in items if item.get("status") in {None, "", "pending"}]
+    refunded = [item for item in items if item.get("status") == "refunded"]
+    return {
+        "total_revenue": sum(float(item.get("amount") or 0) for item in paid),
+        "pending_revenue": sum(float(item.get("amount") or 0) for item in pending),
+        "paid_count": len(paid),
+        "pending_count": len(pending),
+        "refunded_count": len(refunded),
+        "total_count": len(items),
+    }
+
+
+def default_week() -> list[dict[str, Any]]:
+    labels = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"]
+    return [
+        {
+            "weekday": index,
+            "label": label,
+            "is_active": index < 5,
+            "start_time": "08:00",
+            "end_time": "17:00",
+            "break_start": "12:00",
+            "break_end": "13:00",
+            "slot_minutes": 30,
+        }
+        for index, label in enumerate(labels)
+    ]
+
+
+def next_slots() -> list[str]:
+    start = datetime.combine(date.today(), datetime.strptime("08:00", "%H:%M").time())
+    return [(start + timedelta(minutes=30 * index)).strftime("%H:%M") for index in range(18)]
