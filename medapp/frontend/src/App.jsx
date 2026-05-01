@@ -1,0 +1,203 @@
+import { Navigate, Route, Routes } from "react-router-dom";
+import ProtectedRoute from "./components/app/ProtectedRoute";
+import { AuthProvider } from "./context/AuthContext";
+import AgendaPage from "./pages/AgendaPage";
+import AuditPage from "./pages/AuditPage";
+import DashboardPage from "./pages/DashboardPage";
+import DoctorDetailPage from "./pages/DoctorDetailPage";
+import DoctorFormPage from "./pages/DoctorFormPage";
+import DoctorsPage from "./pages/DoctorsPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import LoginPage from "./pages/LoginPage";
+import NewPasswordPage from "./pages/NewPasswordPage";
+import NotificationsPage from "./pages/NotificationsPage";
+import PatientDetailPage from "./pages/PatientDetailPage";
+import PatientFormPage from "./pages/PatientFormPage";
+import PatientsPage from "./pages/PatientsPage";
+import PaymentReceiptPage from "./pages/PaymentReceiptPage";
+import PaymentsPage from "./pages/PaymentsPage";
+import PrescriptionCreatePage from "./pages/PrescriptionCreatePage";
+import PrescriptionDetailPage from "./pages/PrescriptionDetailPage";
+import PrescriptionsPage from "./pages/PrescriptionsPage";
+import RegisterPage from "./pages/RegisterPage";
+import ReportsPage from "./pages/ReportsPage";
+import SchedulePage from "./pages/SchedulePage";
+import SettingsPage from "./pages/SettingsPage";
+import VerifyCodePage from "./pages/VerifyCodePage";
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/auth" element={<Navigate to="/auth/login" replace />} />
+        <Route path="/auth/login" element={<LoginPage />} />
+        <Route path="/auth/register" element={<RegisterPage />} />
+        <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/auth/verify-code" element={<VerifyCodePage />} />
+        <Route path="/auth/new-password" element={<NewPasswordPage />} />
+        <Route
+          path="/agenda"
+          element={(
+            <ProtectedRoute>
+              <AgendaPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/doctors"
+          element={(
+            <ProtectedRoute>
+              <DoctorsPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/doctors/new"
+          element={(
+            <ProtectedRoute>
+              <DoctorFormPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/doctors/:doctorId/edit"
+          element={(
+            <ProtectedRoute>
+              <DoctorFormPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/doctors/:doctorId"
+          element={(
+            <ProtectedRoute>
+              <DoctorDetailPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/patients"
+          element={(
+            <ProtectedRoute>
+              <PatientsPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/patients/new"
+          element={(
+            <ProtectedRoute>
+              <PatientFormPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/patients/:patientId/edit"
+          element={(
+            <ProtectedRoute>
+              <PatientFormPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/patients/:patientId"
+          element={(
+            <ProtectedRoute>
+              <PatientDetailPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/prescriptions"
+          element={(
+            <ProtectedRoute>
+              <PrescriptionsPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/prescriptions/create"
+          element={(
+            <ProtectedRoute>
+              <PrescriptionCreatePage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/prescriptions/:rxId"
+          element={(
+            <ProtectedRoute>
+              <PrescriptionDetailPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/payments"
+          element={(
+            <ProtectedRoute>
+              <PaymentsPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/payments/:paymentId/receipt"
+          element={(
+            <ProtectedRoute>
+              <PaymentReceiptPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/reports"
+          element={(
+            <ProtectedRoute>
+              <ReportsPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/schedule"
+          element={(
+            <ProtectedRoute>
+              <SchedulePage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/dashboard"
+          element={(
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/settings"
+          element={(
+            <ProtectedRoute>
+              <SettingsPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/notifications"
+          element={(
+            <ProtectedRoute>
+              <NotificationsPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/audit"
+          element={(
+            <ProtectedRoute>
+              <AuditPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </AuthProvider>
+  );
+}

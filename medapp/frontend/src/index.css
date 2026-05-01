@@ -1,0 +1,249 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    @apply bg-med-bg font-body text-med-ink antialiased;
+  }
+}
+
+@layer components {
+  .auth-shell {
+    background:
+      radial-gradient(ellipse 80% 60% at 100% 0%, rgba(78,168,222,0.10) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 0% 100%, rgba(94,96,206,0.08) 0%, transparent 55%),
+      #f8f9fa;
+  }
+
+  .input-icon {
+    @apply pointer-events-none absolute left-4 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-med-ink-subtle transition-colors;
+  }
+
+  .field-group:focus-within .input-icon {
+    @apply text-med-violet;
+  }
+
+  .med-input {
+    @apply w-full rounded-2xl border border-med-border bg-med-input px-11 py-3 text-[15px] text-med-ink outline-none transition placeholder:text-[#AAAFCA] focus:border-med-violet focus:bg-white focus:ring-4 focus:ring-[rgba(94,96,206,0.10)];
+  }
+
+  .pill-chip {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/15 px-4 py-2 text-xs font-medium text-white/90 backdrop-blur-md;
+  }
+
+  .gradient-text {
+    background: linear-gradient(90deg, #5e60ce, #4ea8de);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .app-surface {
+    @apply rounded-2xl border border-med-border bg-white shadow-sm;
+  }
+
+  .app-card {
+    @apply app-surface transition duration-200 hover:-translate-y-0.5 hover:shadow-md;
+  }
+
+  .app-btn {
+    @apply inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition;
+  }
+
+  .app-btn-violet {
+    @apply app-btn border-med-violet bg-med-violet text-white hover:border-med-violet-dark hover:bg-med-violet-dark;
+  }
+
+  .app-btn-outline {
+    @apply app-btn border-[rgba(94,96,206,0.18)] bg-[rgba(94,96,206,0.05)] text-med-violet hover:border-med-violet hover:bg-[rgba(94,96,206,0.1)];
+  }
+
+  .app-btn-ghost {
+    @apply app-btn border-med-border bg-white text-med-ink-muted hover:bg-med-bg hover:text-med-ink;
+  }
+
+  .sidebar-link-react {
+    @apply relative flex items-center gap-3 rounded-xl px-6 py-2.5 text-sm font-medium text-white/75 transition hover:bg-white/10 hover:text-white;
+  }
+
+  .sidebar-link-react.active {
+    @apply bg-white/20 font-semibold text-white;
+  }
+
+  .sidebar-link-react.active::before {
+    content: "";
+    @apply absolute left-0 top-1/2 h-3/5 w-[3px] -translate-y-1/2 rounded-r-md bg-med-mint;
+  }
+
+  .status-pill {
+    @apply inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold capitalize tracking-[0.02em];
+  }
+
+  .status-pill::before {
+    content: "";
+    @apply h-1.5 w-1.5 rounded-full bg-current;
+  }
+
+  .status-confirmed {
+    @apply bg-[rgba(128,237,153,0.18)] text-[#1f7a3a];
+  }
+
+  .status-pending {
+    @apply bg-[rgba(255,209,102,0.22)] text-[#8a6200];
+  }
+
+  .status-cancelled {
+    @apply bg-[rgba(247,37,133,0.14)] text-[#c0105e];
+  }
+
+  .status-completed {
+    @apply bg-[rgba(78,168,222,0.15)] text-[#236c96];
+  }
+
+  .status-no_show {
+    @apply bg-[rgba(173,181,189,0.16)] text-med-ink-muted;
+  }
+
+  .status-rescheduled {
+    @apply bg-[rgba(78,168,222,0.15)] text-[#236c96];
+  }
+
+  .status-paid {
+    @apply bg-[rgba(128,237,153,0.18)] text-[#1f7a3a];
+  }
+
+  .agenda-calendar-shell .fc {
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.85rem;
+  }
+
+  .agenda-calendar-shell .fc .fc-toolbar {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e8eaf0;
+    margin-bottom: 0 !important;
+  }
+
+  .agenda-calendar-shell .fc .fc-toolbar-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #2b2d42;
+  }
+
+  .agenda-calendar-shell .fc .fc-button {
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: 0.75rem !important;
+    padding: 0.3rem 0.8rem !important;
+    border: 1.5px solid #e8eaf0 !important;
+    background: #ffffff !important;
+    color: #2b2d42 !important;
+    box-shadow: none !important;
+    transition: all 0.18s ease !important;
+  }
+
+  .agenda-calendar-shell .fc .fc-button:hover {
+    background: #f8f9fa !important;
+  }
+
+  .agenda-calendar-shell .fc .fc-button-active,
+  .agenda-calendar-shell .fc .fc-button-primary:not(:disabled).fc-button-active,
+  .agenda-calendar-shell .fc .fc-button-primary:not(:disabled):active {
+    background: #5e60ce !important;
+    border-color: #5e60ce !important;
+    color: #ffffff !important;
+  }
+
+  .agenda-calendar-shell .fc .fc-daygrid-day-number {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #6b7094;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .agenda-calendar-shell .fc .fc-day-today {
+    background: rgba(94, 96, 206, 0.04) !important;
+  }
+
+  .agenda-calendar-shell .fc .fc-day-today .fc-daygrid-day-number {
+    color: #5e60ce;
+    font-weight: 700;
+    background: #eeeef9;
+    border-radius: 999px;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0.3rem;
+  }
+
+  .agenda-calendar-shell .fc .fc-col-header-cell {
+    background: #f8f9fa;
+  }
+
+  .agenda-calendar-shell .fc .fc-col-header-cell-cushion {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7094;
+    padding: 0.6rem 0.5rem;
+  }
+
+  .agenda-calendar-shell .fc-event {
+    border-radius: 6px !important;
+    border: none !important;
+    padding: 2px 6px !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    cursor: pointer;
+  }
+
+  .agenda-calendar-shell .fc-event:hover {
+    filter: brightness(0.95);
+  }
+
+  .agenda-calendar-shell .fc .fc-timegrid-slot-label {
+    font-size: 0.73rem;
+    color: #6b7094;
+  }
+
+  .agenda-calendar-shell .fc .fc-timegrid-now-indicator-line {
+    border-color: #f72585;
+    border-width: 2px;
+  }
+
+  .agenda-calendar-shell .fc .fc-timegrid-now-indicator-arrow {
+    border-top-color: #f72585;
+    border-bottom-color: #f72585;
+  }
+
+  .agenda-calendar-shell .fc .fc-scrollgrid {
+    border-color: #e8eaf0 !important;
+    border-radius: 0 0 1rem 1rem;
+    overflow: hidden;
+  }
+
+  .agenda-calendar-shell .fc .fc-scrollgrid td,
+  .agenda-calendar-shell .fc .fc-scrollgrid th {
+    border-color: #e8eaf0 !important;
+  }
+
+  .agenda-calendar-shell .fc .fc-daygrid-more-link {
+    font-size: 0.72rem;
+    color: #5e60ce;
+    font-weight: 600;
+  }
+}
