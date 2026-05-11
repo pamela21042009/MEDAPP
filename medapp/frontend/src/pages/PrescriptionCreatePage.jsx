@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import AppShell from "../components/app/AppShell";
 import Icon from "../components/ui/Icon";
+import { createMedication } from "../lib/catalogs";
 import { createPrescription, getPrescriptionsBootstrap } from "../lib/prescriptions";
 
 const EMPTY_ITEM = {
@@ -11,14 +12,19 @@ const EMPTY_ITEM = {
   duration_days: "",
   instructions: "",
 };
+const EMPTY_MEDICATION = { name: "", generic_name: "", category: "", unit: "", requires_rx: true, is_active: true };
 
 export default function PrescriptionCreatePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [bootstrap, setBootstrap] = useState(null);
+  const [medications, setMedications] = useState([]);
   const [patientId, setPatientId] = useState("");
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState([EMPTY_ITEM]);
+  const [showMedicationForm, setShowMedicationForm] = useState(false);
+  const [medicationForm, setMedicationForm] = useState(EMPTY_MEDICATION);
+  const [savingMedication, setSavingMedication] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -36,6 +42,7 @@ export default function PrescriptionCreatePage() {
         const data = await getPrescriptionsBootstrap();
         if (active) {
           setBootstrap(data);
+          setMedications(data?.medications || []);
         }
       } catch (err) {
         if (active) {
@@ -56,7 +63,6 @@ export default function PrescriptionCreatePage() {
   }, []);
 
   const blocked = !loading && !bootstrap?.can_write;
-  const medications = bootstrap?.medications || [];
   const patients = bootstrap?.patients || [];
   const submitLabel = useMemo(() => (saving ? "Guardando..." : "Guardar receta"), [saving]);
 
@@ -70,6 +76,45 @@ export default function PrescriptionCreatePage() {
 
   function removeItem(index) {
     setItems((current) => (current.length > 1 ? current.filter((_, itemIndex) => itemIndex !== index) : current));
+  }
+
+  async function handleMedicationCreate(event) {
+    event?.preventDefault();
+    setSavingMedication(true);
+    setError("");
+    try {
+      const payload = {
+        ...medicationForm,
+        name: medicationForm.name.trim(),
+        generic_name: medicationForm.generic_name.trim(),
+        category: medicationForm.category.trim(),
+        unit: medicationForm.unit.trim(),
+      };
+      if (!payload.name) {
+        setError("Escribe el nombre del medicamento.");
+        return;
+      }
+      const result = await createMedication(payload);
+      const created = result?.item;
+      if (created?.id) {
+        setMedications((current) => [...current, created]);
+        setItems((current) => {
+          const emptyIndex = current.findIndex((item) => !item.medication_id);
+          if (emptyIndex === -1) {
+            return [...current, { ...EMPTY_ITEM, medication_id: String(created.id) }];
+          }
+          return current.map((item, index) => (
+            index === emptyIndex ? { ...item, medication_id: String(created.id) } : item
+          ));
+        });
+      }
+      setMedicationForm(EMPTY_MEDICATION);
+      setShowMedicationForm(false);
+    } catch (err) {
+      setError(err.message || "No fue posible crear el medicamento.");
+    } finally {
+      setSavingMedication(false);
+    }
   }
 
   async function handleSubmit(event) {
@@ -188,15 +233,43 @@ export default function PrescriptionCreatePage() {
             <section className="app-surface overflow-hidden">
               <div className="flex items-center justify-between border-b border-med-border px-6 py-5">
                 <h2 className="text-[0.95rem] font-semibold text-med-ink">Medicamentos</h2>
-                <button type="button" className="app-btn-outline" onClick={addItem}>
-                  <Icon className="h-4 w-4">
-                    <path d="M12 5v14" />
-                    <path d="M5 12h14" />
-                  </Icon>
-                  Agregar
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" className="app-btn-ghost" onClick={() => setShowMedicationForm((value) => !value)}>
+                    Nuevo medicamento
+                  </button>
+                  <button type="button" className="app-btn-outline" onClick={addItem}>
+                    <Icon className="h-4 w-4">
+                      <path d="M12 5v14" />
+                      <path d="M5 12h14" />
+                    </Icon>
+                    Agregar
+                  </button>
+                </div>
               </div>
               <div className="space-y-4 px-6 py-6">
+                {showMedicationForm ? (
+                  <div className="rounded-2xl border border-[rgba(94,96,206,0.22)] bg-[rgba(94,96,206,0.05)] px-4 py-4">
+                    <div className="mb-4 text-sm font-semibold text-med-ink">Registrar medicamento nuevo</div>
+                    <div className="grid gap-4 md:grid-cols-4">
+                      <Field label="Nombre *">
+                        <input className="med-input px-4 py-3" value={medicationForm.name} onChange={(event) => setMedicationForm((current) => ({ ...current, name: event.target.value }))} />
+                      </Field>
+                      <Field label="Generico">
+                        <input className="med-input px-4 py-3" value={medicationForm.generic_name} onChange={(event) => setMedicationForm((current) => ({ ...current, generic_name: event.target.value }))} />
+                      </Field>
+                      <Field label="Categoria">
+                        <input className="med-input px-4 py-3" value={medicationForm.category} onChange={(event) => setMedicationForm((current) => ({ ...current, category: event.target.value }))} />
+                      </Field>
+                      <Field label="Unidad">
+                        <input className="med-input px-4 py-3" value={medicationForm.unit} onChange={(event) => setMedicationForm((current) => ({ ...current, unit: event.target.value }))} placeholder="tableta, ml..." />
+                      </Field>
+                    </div>
+                    <div className="mt-4 flex flex-wrap justify-end gap-2">
+                      <button type="button" className="app-btn-ghost" onClick={() => setShowMedicationForm(false)} disabled={savingMedication}>Cancelar</button>
+                      <button className="app-btn-violet" type="button" onClick={handleMedicationCreate} disabled={savingMedication}>{savingMedication ? "Guardando..." : "Guardar medicamento"}</button>
+                    </div>
+                  </div>
+                ) : null}
                 {items.map((item, index) => (
                   <div key={index} className="rounded-2xl border border-med-border bg-white px-4 py-4">
                     <div className="grid gap-4 md:grid-cols-[2fr_1fr_1fr_1fr_auto]">

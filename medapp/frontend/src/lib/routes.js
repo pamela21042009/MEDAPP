@@ -10,6 +10,7 @@ export const APP_ROUTE_PREFIXES = [
   "/settings",
   "/notifications",
   "/audit",
+  "/catalogs",
 ];
 
 export function getLandingPath(role) {

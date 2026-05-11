@@ -45,8 +45,10 @@ def create_app(env: str = None) -> Flask:
     from app.routes.notifications import bp as notifications_bp
     from app.routes.schedule import bp as schedule_bp
     from app.routes.audit import bp as audit_bp
+    from app.routes.catalogs import bp as catalogs_bp
     app.register_blueprint(audit_bp)
     app.register_blueprint(schedule_bp)
+    app.register_blueprint(catalogs_bp)
     
 
     app.register_blueprint(auth.bp)
@@ -60,11 +62,19 @@ def create_app(env: str = None) -> Flask:
     app.register_blueprint(prescriptions_bp)
     app.register_blueprint(notifications_bp)
 
+    from app.services.reminder_service import start_reminder_worker
+    start_reminder_worker(app)
+
     @app.route("/assets/<path:filename>")
     def frontend_asset(filename: str):
         if not os.path.isdir(frontend_assets) and frontend_dev_origin:
             return redirect(_build_frontend_url(frontend_dev_origin, f"/assets/{filename}", request.query_string))
         return send_from_directory(frontend_assets, filename)
+
+    @app.route("/uploads/<path:filename>")
+    def uploaded_file(filename: str):
+        upload_root = os.path.abspath(os.path.join(app.root_path, "..", "uploads"))
+        return send_from_directory(upload_root, filename)
 
     @app.route("/<path:filename>")
     def frontend_public_file(filename: str):
@@ -126,6 +136,7 @@ def _apply_auth_guards(app: Flask) -> None:
         "/settings",
         "/notifications",
         "/audit",
+        "/catalogs",
     }
     frontend_prefix_routes = [
         "/doctors",
@@ -143,6 +154,7 @@ def _apply_auth_guards(app: Flask) -> None:
         "auth.index",
         "frontend_asset",
         "frontend_public_file",
+        "uploaded_file",
         "static",
     }
 

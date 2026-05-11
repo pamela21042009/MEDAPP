@@ -1,4 +1,4 @@
-import { apiRequest } from "./api";
+import { apiRequest, toBackendUrl } from "./api";
 
 export function getPatientsBootstrap() {
   return apiRequest("/patients/api/bootstrap");
@@ -35,6 +35,21 @@ export function updatePatient(patientId, payload) {
     method: "PUT",
     body: JSON.stringify(payload),
   });
+}
+
+export async function uploadPatientAvatar(patientId, file) {
+  const formData = new FormData();
+  formData.append("avatar", file);
+  const response = await fetch(toBackendUrl(`/patients/api/${patientId}/avatar`), {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(payload?.error || payload?.message || "No fue posible subir la imagen.");
+  }
+  return payload;
 }
 
 export function updatePatientClinicalNote(patientId, appointmentId, payload) {

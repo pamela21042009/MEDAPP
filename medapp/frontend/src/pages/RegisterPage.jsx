@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import AuthLayout from "../components/auth/AuthLayout";
 import Icon from "../components/ui/Icon";
 import { useAuth } from "../context/AuthContext";
-import { registerUser } from "../lib/auth";
+import { getRegistrationSpecialties, registerUser } from "../lib/auth";
 import { getLandingPath } from "../lib/routes";
 
 const ROLE_OPTIONS = [
@@ -13,7 +13,7 @@ const ROLE_OPTIONS = [
   { value: "admin", label: "Admin" },
 ];
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
-const SPECIALTIES = [
+const FALLBACK_SPECIALTIES = [
   "Medicina General",
   "Cardiologia",
   "Dermatologia",
@@ -24,7 +24,6 @@ const SPECIALTIES = [
   "Pediatria",
   "Psiquiatria",
   "Radiologia",
-  "Otra",
 ];
 const INITIAL_FORM = {
   role: "paciente",
@@ -37,6 +36,7 @@ const INITIAL_FORM = {
   blood_type: "",
   allergies: "",
   specialty: "",
+  custom_specialty: "",
   license_number: "",
   professional_id: "",
   admin_code: "",
@@ -55,6 +55,7 @@ export default function RegisterPage() {
   const [form, setForm] = useState(INITIAL_FORM);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [specialties, setSpecialties] = useState(FALLBACK_SPECIALTIES);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -64,13 +65,33 @@ export default function RegisterPage() {
     }
   }, [loading, navigate, user]);
 
+  useEffect(() => {
+    let active = true;
+    getRegistrationSpecialties()
+      .then((payload) => {
+        if (active && Array.isArray(payload?.items) && payload.items.length) {
+          setSpecialties(payload.items);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
     setSubmitting(true);
 
     try {
-      const result = await registerUser(form);
+      const specialty = form.specialty === "__other__" ? form.custom_specialty.trim() : form.specialty;
+      if (form.role === "medico" && !specialty) {
+        setError("Selecciona o escribe una especialidad.");
+        setSubmitting(false);
+        return;
+      }
+      const result = await registerUser({ ...form, specialty });
       navigate("/auth/login", {
         replace: true,
         state: {
@@ -183,11 +204,22 @@ export default function RegisterPage() {
               <Field label="Especialidad">
                 <select className="med-input px-4 py-3" value={form.specialty} onChange={(event) => setForm((current) => ({ ...current, specialty: event.target.value }))}>
                   <option value="">Seleccionar...</option>
-                  {SPECIALTIES.map((specialty) => (
+                  {specialties.map((specialty) => (
                     <option key={specialty} value={specialty}>{specialty}</option>
                   ))}
+                  <option value="__other__">Otra especialidad</option>
                 </select>
               </Field>
+              {form.specialty === "__other__" ? (
+                <Field label="Nueva especialidad">
+                  <TextInput
+                    value={form.custom_specialty}
+                    onChange={(value) => setForm((current) => ({ ...current, custom_specialty: value }))}
+                    placeholder="Ej. Endocrinologia"
+                    required
+                  />
+                </Field>
+              ) : null}
               <Field label="No. de licencia">
                 <TextInput value={form.license_number} onChange={(value) => setForm((current) => ({ ...current, license_number: value }))} />
               </Field>

@@ -3,6 +3,7 @@ import ProtectedRoute from "./components/app/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import AgendaPage from "./pages/AgendaPage";
 import AuditPage from "./pages/AuditPage";
+import CatalogsPage from "./pages/CatalogsPage";
 import DashboardPage from "./pages/DashboardPage";
 import DoctorDetailPage from "./pages/DoctorDetailPage";
 import DoctorFormPage from "./pages/DoctorFormPage";
@@ -193,6 +194,14 @@ export default function App() {
           element={(
             <ProtectedRoute>
               <AuditPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/catalogs"
+          element={(
+            <ProtectedRoute>
+              <CatalogsPage />
             </ProtectedRoute>
           )}
         />

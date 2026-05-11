@@ -9,6 +9,7 @@ export default function VerifyCodePage() {
   const navigate = useNavigate();
   const inputRefs = useRef([]);
   const [email, setEmail] = useState("");
+  const [debugCode, setDebugCode] = useState("");
   const [digits, setDigits] = useState(["", "", "", "", "", ""]);
   const [secondsLeft, setSecondsLeft] = useState(600);
   const [loading, setLoading] = useState(true);
@@ -29,6 +30,7 @@ export default function VerifyCodePage() {
           return;
         }
         setEmail(result.email);
+        setDebugCode(result.debug_code || "");
       } catch {
         if (active) {
           navigate("/auth/forgot-password", { replace: true });
@@ -119,6 +121,12 @@ export default function VerifyCodePage() {
       {error ? (
         <div className="mb-5 rounded-2xl border border-[rgba(247,37,133,0.22)] bg-[rgba(247,37,133,0.08)] px-4 py-3 text-sm text-[#c0185a]">
           {error}
+        </div>
+      ) : null}
+
+      {debugCode ? (
+        <div className="mb-5 rounded-2xl border border-[rgba(128,237,153,0.35)] bg-white px-4 py-3 text-sm text-[#1f7a3a] shadow-sm">
+          Codigo de prueba local: <strong>{debugCode}</strong>
         </div>
       ) : null}
 

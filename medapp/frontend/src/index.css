@@ -96,27 +96,27 @@
   }
 
   .status-confirmed {
-    @apply bg-[rgba(128,237,153,0.18)] text-[#1f7a3a];
+    @apply bg-[#DDF8E6] text-[#24823B];
   }
 
   .status-pending {
-    @apply bg-[rgba(255,209,102,0.22)] text-[#8a6200];
+    @apply bg-[#FFF0BF] text-[#8A6200];
   }
 
   .status-cancelled {
-    @apply bg-[rgba(247,37,133,0.14)] text-[#c0105e];
+    @apply bg-[#FFD4E7] text-[#C0105E];
   }
 
   .status-completed {
-    @apply bg-[rgba(78,168,222,0.15)] text-[#236c96];
+    @apply bg-[#DDF2FB] text-[#287AA8];
   }
 
   .status-no_show {
-    @apply bg-[rgba(173,181,189,0.16)] text-med-ink-muted;
+    @apply bg-[#E9ECEF] text-[#5C6770];
   }
 
   .status-rescheduled {
-    @apply bg-[rgba(78,168,222,0.15)] text-[#236c96];
+    @apply bg-[#DDF2FB] text-[#287AA8];
   }
 
   .status-paid {
@@ -207,12 +207,17 @@
     border: none !important;
     padding: 2px 6px !important;
     font-size: 0.75rem !important;
-    font-weight: 500 !important;
+    font-weight: 700 !important;
     cursor: pointer;
+    box-shadow: none !important;
   }
 
   .agenda-calendar-shell .fc-event:hover {
-    filter: brightness(0.95);
+    filter: brightness(0.98);
+  }
+
+  .agenda-calendar-shell .fc-h-event .fc-event-main {
+    color: inherit !important;
   }
 
   .agenda-calendar-shell .fc .fc-timegrid-slot-label {

@@ -56,7 +56,7 @@ export default function ReportsPage() {
     dateTo: "",
   });
 
-  const canAccess = ["admin", "staff"].includes(user?.role);
+  const canAccess = ["admin", "doctor", "staff", "paciente"].includes(user?.role);
 
   useEffect(() => {
     if (!canAccess) {
@@ -142,7 +142,8 @@ export default function ReportsPage() {
   const topDoctors = reports.top_doctors || [];
   const paymentMethods = reports.payment_methods || [];
   const newPatients = reports.new_patients || [];
-  const reportDoctors = medicalReport.doctors || [];
+  const reportDoctors = medicalReport.doctors?.length ? medicalReport.doctors : reports.doctors || [];
+  const selectedDoctor = reportDoctors.find((doctor) => String(doctor.id) === String(filters.doctorId));
   const exportQuery = buildReportQuery(filters);
   const excelExportUrl = toBackendUrl(`/reports/export/excel${exportQuery ? `?${exportQuery}` : ""}`);
   const pdfExportUrl = toBackendUrl(`/reports/export/pdf${exportQuery ? `?${exportQuery}` : ""}`);
@@ -222,7 +223,9 @@ export default function ReportsPage() {
           </div>
         </div>
         <div className="border-t border-med-border px-6 py-4 text-sm text-med-ink-muted">
-          {medicalLoading ? "Cargando reporte medico..." : `${medicalReport.total_appointments || 0} citas encontradas en el filtro actual.`}
+          {medicalLoading
+            ? "Cargando reporte medico..."
+            : `${medicalReport.total_appointments || 0} citas encontradas${selectedDoctor ? ` para ${selectedDoctor.full_name}` : ""}${formatDateRange(filters)}.`}
         </div>
         {medicalError ? (
           <div className="border-t border-med-border px-6 py-4 text-sm text-[#c0185a]">{medicalError}</div>
@@ -249,6 +252,16 @@ export default function ReportsPage() {
           )}
         </Card>
       </section>
+
+      <Card title="Detalle de citas filtradas">
+        {medicalLoading ? (
+          <ChartSkeleton heightClass="h-64" />
+        ) : !medicalReport.appointments?.length ? (
+          <EmptyState title="Sin citas en el filtro" description="Selecciona otro medico o rango para ver el detalle." compact />
+        ) : (
+          <AppointmentsTable rows={medicalReport.appointments} />
+        )}
+      </Card>
 
       <section className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
@@ -622,6 +635,42 @@ function TopDoctorsTable({ rows, loading }) {
   );
 }
 
+function AppointmentsTable({ rows }) {
+  return (
+    <div className="-mx-6 overflow-x-auto">
+      <table className="min-w-full border-separate border-spacing-0">
+        <thead>
+          <tr className="bg-med-bg">
+            <TableHead>Fecha</TableHead>
+            <TableHead>Hora</TableHead>
+            <TableHead>Medico</TableHead>
+            <TableHead>Paciente</TableHead>
+            <TableHead>Estado</TableHead>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id} className="transition hover:bg-[#fafafe]">
+              <TableCell>{row.appointment_date || "--"}</TableCell>
+              <TableCell>{String(row.appointment_time || "--").slice(0, 5)}</TableCell>
+              <TableCell>
+                <div className="font-semibold text-med-ink">{row.doctor_name || "--"}</div>
+                {row.doctor_specialty ? <div className="mt-1 text-xs text-med-ink-muted">{row.doctor_specialty}</div> : null}
+              </TableCell>
+              <TableCell>{row.patient_name || "--"}</TableCell>
+              <TableCell>
+                <span className={`status-pill status-${row.status || "pending"}`}>
+                  {humanizeStatus(row.status)}
+                </span>
+              </TableCell>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function AccessDeniedCard() {
   return (
     <section className="app-surface px-6 py-10">
@@ -631,7 +680,7 @@ function AccessDeniedCard() {
         </div>
         <h1 className="text-lg font-semibold text-med-ink">Acceso restringido</h1>
         <p className="mt-2 text-sm leading-6 text-med-ink-muted">
-          Este modulo solo esta disponible para usuarios con rol admin o staff.
+          Este modulo solo esta disponible para usuarios con rol paciente, doctor, admin o staff.
         </p>
         <Link className="app-btn-violet mt-5 inline-flex" to="/dashboard">
           Volver al dashboard
@@ -681,6 +730,31 @@ function buildReportQuery(filters) {
     query.set("date_to", filters.dateTo);
   }
   return query.toString();
+}
+
+function formatDateRange(filters) {
+  if (filters.dateFrom && filters.dateTo) {
+    return ` entre ${filters.dateFrom} y ${filters.dateTo}`;
+  }
+  if (filters.dateFrom) {
+    return ` desde ${filters.dateFrom}`;
+  }
+  if (filters.dateTo) {
+    return ` hasta ${filters.dateTo}`;
+  }
+  return "";
+}
+
+function humanizeStatus(status) {
+  const labels = {
+    pending: "Pendiente",
+    confirmed: "Confirmada",
+    cancelled: "Cancelada",
+    completed: "Atendida",
+    no_show: "No asistida",
+    rescheduled: "Reprogramada",
+  };
+  return labels[status] || status || "--";
 }
 
 function formatCurrency(value) {

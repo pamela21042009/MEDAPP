@@ -107,6 +107,7 @@ FLASK_DEBUG=true
 SUPABASE_URL=https://tu-proyecto.supabase.co
 SUPABASE_KEY=tu_clave_supabase
 SUPABASE_SSL_VERIFY=true
+SUPABASE_SELECT_CACHE_SECONDS=12
 
 FRONTEND_DEV_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 
@@ -151,6 +152,7 @@ ONLINE_PAYMENT_CURRENCY=USD
 | `FLASK_DEBUG` | Activa o desactiva el modo debug. |
 | `SUPABASE_URL` | URL del proyecto Supabase. |
 | `SUPABASE_KEY` | Clave de acceso a Supabase/PostgREST. |
+| `SUPABASE_SELECT_CACHE_SECONDS` | Segundos de cache local para lecturas repetidas a Supabase. |
 | `FRONTEND_DEV_ORIGINS` | Origenes permitidos del frontend en desarrollo. |
 | `ADMIN_REGISTER_CODE` | Codigo requerido para registro administrativo. |
 | `DOCTOR_REGISTER_CODE` | Codigo requerido para registrar cuentas de medico. |
@@ -181,6 +183,10 @@ El backend se ejecuta por defecto en:
 ```text
 http://localhost:5000
 ```
+
+### clonar el repositorio
+git clone https://github.com/pamela21042009/MEDAPP.git
+
 
 ### Crear cuenta de secretaria
 

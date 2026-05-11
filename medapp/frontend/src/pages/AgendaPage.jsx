@@ -12,15 +12,15 @@ import {
 } from "../lib/agenda";
 
 const STATUS_OPTIONS = [
-  { value: "pending", label: "Pendiente", chipClass: "bg-[rgba(255,209,102,0.22)] text-[#8a6200]" },
-  { value: "confirmed", label: "Confirmada", chipClass: "bg-[rgba(128,237,153,0.18)] text-[#1f7a3a]" },
-  { value: "completed", label: "Atendida", chipClass: "bg-[rgba(78,168,222,0.15)] text-[#236c96]" },
-  { value: "no_show", label: "No asistida", chipClass: "bg-[rgba(173,181,189,0.22)] text-[#5c6770]" },
-  { value: "cancelled", label: "Cancelada", chipClass: "bg-[rgba(247,37,133,0.14)] text-[#c0105e]" },
-  { value: "rescheduled", label: "Reprogramada", chipClass: "bg-[rgba(78,168,222,0.15)] text-[#236c96]" },
+  { value: "pending", label: "Pendiente", chipClass: "bg-[#FFF0BF] text-[#8A6200]" },
+  { value: "confirmed", label: "Confirmada", chipClass: "bg-[#DDF8E6] text-[#24823B]" },
+  { value: "completed", label: "Atendida", chipClass: "bg-[#DDF2FB] text-[#287AA8]" },
+  { value: "no_show", label: "No asistida", chipClass: "bg-[#E9ECEF] text-[#5C6770]" },
+  { value: "cancelled", label: "Cancelada", chipClass: "bg-[#FFD4E7] text-[#C0105E]" },
+  { value: "rescheduled", label: "Reprogramada", chipClass: "bg-[#DDF2FB] text-[#287AA8]" },
 ];
 
-const EDITABLE_STATUS_OPTIONS = STATUS_OPTIONS.filter((option) => option.value !== "cancelled");
+const EDITABLE_STATUS_OPTIONS = STATUS_OPTIONS;
 
 const EMPTY_FORM = {
   patient_id: "",
@@ -65,6 +65,10 @@ function formatTimeLocal(date) {
   return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 }
 
+function normalizeTimeValue(value) {
+  return String(value || "").slice(0, 5);
+}
+
 function sortSlots(slots) {
   return [...slots].sort((left, right) => left.localeCompare(right));
 }
@@ -83,6 +87,7 @@ export default function AgendaPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [slots, setSlots] = useState([]);
+  const [slotsMessage, setSlotsMessage] = useState("");
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [cancellationReason, setCancellationReason] = useState("");
   const [toast, setToast] = useState(null);
@@ -234,25 +239,27 @@ export default function AgendaPage() {
   useEffect(() => {
     if (!modal.open || modal.mode === "view" || !form.doctor_id || !form.appointment_date) {
       setSlots([]);
+      setSlotsMessage("");
       return undefined;
     }
 
     let active = true;
     setSlotsLoading(true);
 
-    getAgendaSlots(form.doctor_id, form.appointment_date)
+    getAgendaSlots(form.doctor_id, form.appointment_date, modal.mode === "edit" ? selectedAppointment?.id : "")
       .then((result) => {
         if (!active) {
           return;
         }
 
-        const nextSlots = result || [];
+        const nextSlots = Array.isArray(result) ? result : result?.slots || [];
+        setSlotsMessage(Array.isArray(result) ? "" : result?.message || "");
         const isEditingCurrentSelection =
           modal.mode === "edit" &&
           selectedAppointment &&
           String(selectedAppointment.doctor_id || "") === String(form.doctor_id) &&
           (selectedAppointment.appointment_date || "") === form.appointment_date &&
-          (selectedAppointment.appointment_time || "") === form.appointment_time;
+          normalizeTimeValue(selectedAppointment.appointment_time) === normalizeTimeValue(form.appointment_time);
 
         if (form.appointment_time && !nextSlots.includes(form.appointment_time) && isEditingCurrentSelection) {
           setSlots(sortSlots([...nextSlots, form.appointment_time]));
@@ -266,6 +273,7 @@ export default function AgendaPage() {
       .catch(() => {
         if (active) {
           setSlots([]);
+          setSlotsMessage("No fue posible consultar los horarios disponibles.");
           setForm((current) => ({ ...current, appointment_time: "" }));
         }
       })
@@ -278,7 +286,7 @@ export default function AgendaPage() {
     return () => {
       active = false;
     };
-  }, [form.appointment_date, form.appointment_time, form.doctor_id, modal.mode, modal.open]);
+  }, [form.appointment_date, form.appointment_time, form.doctor_id, modal.mode, modal.open, selectedAppointment?.id]);
 
   useEffect(() => {
     if (!toast) {
@@ -325,7 +333,7 @@ export default function AgendaPage() {
       patient_id: selectedAppointment.patient_id ? String(selectedAppointment.patient_id) : "",
       doctor_id: selectedAppointment.doctor_id ? String(selectedAppointment.doctor_id) : "",
       appointment_date: selectedAppointment.appointment_date || "",
-      appointment_time: selectedAppointment.appointment_time || "",
+      appointment_time: normalizeTimeValue(selectedAppointment.appointment_time),
       duration_minutes: String(selectedAppointment.duration_minutes || 30),
       status: selectedAppointment.status || "pending",
       notes: selectedAppointment.notes || selectedAppointment.reason || "",
@@ -368,15 +376,30 @@ export default function AgendaPage() {
       return;
     }
 
+    const statusChanged = modal.mode === "edit" && selectedAppointment && form.status !== (selectedAppointment.status || "pending");
+    const scheduleChanged =
+      modal.mode === "edit" &&
+      selectedAppointment &&
+      ((selectedAppointment.appointment_date || "") !== form.appointment_date ||
+        (selectedAppointment.appointment_time || "") !== form.appointment_time);
+    const nextStatus = scheduleChanged && !statusChanged ? "rescheduled" : form.status;
+    const nextCancellationReason = cancellationReason.trim();
+
+    if (nextStatus === "cancelled" && !nextCancellationReason) {
+      showToast("Debes indicar el motivo de cancelacion.", "error");
+      return;
+    }
+
     const payload = {
       patient_id: form.patient_id ? Number(form.patient_id) : undefined,
       doctor_id: Number(form.doctor_id),
       appointment_date: form.appointment_date,
       appointment_time: form.appointment_time,
       duration_minutes: Number(form.duration_minutes || 30),
-      status: form.status,
+      status: nextStatus,
       notes: form.notes,
       virtual_link: form.virtual_link || null,
+      cancellation_reason: nextStatus === "cancelled" ? nextCancellationReason : "",
     };
 
     setSaving(true);
@@ -474,7 +497,7 @@ export default function AgendaPage() {
       doctor_id: props.doctor_id,
       duration_minutes: props.duration_minutes,
       appointment_date: props.appointment_date,
-      appointment_time: props.appointment_time,
+      appointment_time: normalizeTimeValue(props.appointment_time),
       virtual_link: props.virtual_link,
       cancellation_reason: props.cancellation_reason,
     };
@@ -608,6 +631,7 @@ export default function AgendaPage() {
           selectedAppointment={selectedAppointment}
           saving={saving}
           slots={slots}
+          slotsMessage={slotsMessage}
           slotsLoading={slotsLoading}
           cancellationReason={cancellationReason}
           onChange={setForm}
@@ -648,6 +672,7 @@ function AgendaModal({
   selectedAppointment,
   saving,
   slots,
+  slotsMessage,
   slotsLoading,
   cancellationReason,
   onChange,
@@ -698,7 +723,7 @@ function AgendaModal({
               <div className="rounded-2xl border border-med-border bg-med-bg px-4 py-4">
                 <div className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-med-ink-muted">Cambiar estado rapido</div>
                 <div className="flex flex-wrap gap-2">
-                  {["confirmed", "completed", "no_show"].map((status) => (
+                  {["pending", "confirmed", "completed", "no_show", "rescheduled"].map((status) => (
                     <button
                       key={status}
                       type="button"
@@ -805,7 +830,7 @@ function AgendaModal({
                 </select>
               ) : (
                 <div className="med-input flex items-center px-4 py-3 text-sm text-med-ink-muted">
-                  No hay horarios disponibles para esa fecha.
+                  {slotsMessage || "No hay horarios disponibles para esa fecha."}
                 </div>
               )}
             </FormField>
@@ -837,6 +862,17 @@ function AgendaModal({
                 ))}
               </select>
             </FormField>
+
+            {form.status === "cancelled" ? (
+              <FormField label="Motivo de cancelacion" className="sm:col-span-2">
+                <textarea
+                  className="med-input min-h-[96px] resize-y px-4 py-3"
+                  value={cancellationReason}
+                  placeholder="Describe por que se cancela esta cita..."
+                  onChange={(event) => onCancellationReasonChange(event.target.value)}
+                />
+              </FormField>
+            ) : null}
 
             <FormField label="Motivo / notas" className="sm:col-span-2">
               <textarea

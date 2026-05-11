@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from flask import Blueprint, session
 
-from .api_helpers import ok, select, update
+from .api_helpers import fail, ok, role, select, update
+from app.services.reminder_service import ReminderService
 
 bp = Blueprint("notifications", __name__, url_prefix="/notifications")
 
@@ -41,3 +42,10 @@ def api_read_all():
         if item.get("id"):
             update("notifications", int(item["id"]), {"is_read": True})
     return ok(message="Notificaciones actualizadas.")
+
+
+@bp.route("/api/reminders/run", methods=["POST"])
+def api_run_reminders():
+    if role() != "admin":
+        return fail("Solo el administrador puede ejecutar recordatorios.", 403)
+    return ok(ReminderService().scan_and_send())

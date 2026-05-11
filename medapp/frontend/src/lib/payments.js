@@ -1,3 +1,5 @@
+//comunicación frontend-backend
+
 import { apiRequest } from "./api";
 
 export function getPaymentsBootstrap() {

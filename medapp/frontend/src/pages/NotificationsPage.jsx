@@ -3,12 +3,14 @@ import { Link } from "react-router-dom";
 
 import AppShell from "../components/app/AppShell";
 import Icon from "../components/ui/Icon";
+import { useAuth } from "../context/AuthContext";
 import { toBackendUrl } from "../lib/api";
 import { isReactAppRoute, normalizeAppRoute } from "../lib/routes";
 import {
   getNotificationsBootstrap,
   markAllNotificationsRead,
   markNotificationRead,
+  runAppointmentReminders,
 } from "../lib/notifications";
 
 const TYPE_META = {
@@ -21,14 +23,18 @@ const TYPE_META = {
 };
 
 export default function NotificationsPage() {
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [unreadBefore, setUnreadBefore] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [runningReminders, setRunningReminders] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   async function loadNotifications() {
     setLoading(true);
     setError("");
+    setNotice("");
 
     try {
       const payload = await getNotificationsBootstrap();
@@ -66,6 +72,21 @@ export default function NotificationsPage() {
     }
   }
 
+  async function handleRunReminders() {
+    setRunningReminders(true);
+    setError("");
+    setNotice("");
+    try {
+      const result = await runAppointmentReminders();
+      await loadNotifications();
+      setNotice(`Recordatorios revisados: ${result.scanned || 0}. Correos enviados: ${result.sent || 0}. Omitidos: ${result.skipped || 0}.`);
+    } catch (err) {
+      setError(err.message || "No fue posible ejecutar los recordatorios.");
+    } finally {
+      setRunningReminders(false);
+    }
+  }
+
   return (
     <AppShell pageTitle="Notificaciones" activePage="notifications">
       <section className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -73,14 +94,27 @@ export default function NotificationsPage() {
           <h1 className="text-[1.45rem] font-bold tracking-[-0.02em] text-med-ink">Notificaciones</h1>
           <p className="mt-1 text-sm text-med-ink-muted">Alertas, avisos y eventos recientes del sistema.</p>
         </div>
-        <button type="button" className="app-btn-ghost" onClick={handleMarkAllRead} disabled={loading || !items.length}>
-          Marcar todo como leido
-        </button>
+        <div className="flex flex-wrap gap-3">
+          {user?.role === "admin" ? (
+            <button type="button" className="app-btn-violet" onClick={handleRunReminders} disabled={loading || runningReminders}>
+              {runningReminders ? "Ejecutando..." : "Ejecutar recordatorios"}
+            </button>
+          ) : null}
+          <button type="button" className="app-btn-ghost" onClick={handleMarkAllRead} disabled={loading || !items.length}>
+            Marcar todo como leido
+          </button>
+        </div>
       </section>
 
       {error ? (
         <div className="mb-6 rounded-2xl border border-[rgba(247,37,133,0.22)] bg-[rgba(247,37,133,0.08)] px-4 py-3 text-sm text-[#c0185a]">
           {error}
+        </div>
+      ) : null}
+
+      {notice ? (
+        <div className="mb-6 rounded-2xl border border-[rgba(128,237,153,0.35)] bg-[rgba(128,237,153,0.12)] px-4 py-3 text-sm text-[#1f7a3a]">
+          {notice}
         </div>
       ) : null}
 

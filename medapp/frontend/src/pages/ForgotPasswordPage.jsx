@@ -20,7 +20,8 @@ export default function ForgotPasswordPage() {
 
     try {
       const result = await requestPasswordReset({ email });
-      setNotice(result?.message || "Si el correo existe recibiras un codigo en minutos.");
+      const debugSuffix = result?.debug_code ? ` Codigo de prueba: ${result.debug_code}` : "";
+      setNotice(`${result?.message || "Si el correo existe recibiras un codigo en minutos."}${debugSuffix}`);
       if (result?.sent && result?.next_step) {
         navigate(normalizeAppRoute(result.next_step), { replace: true });
       }

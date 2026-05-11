@@ -71,13 +71,24 @@ export default function DashboardPage() {
   const monthlyRevenue = data.monthly_revenue || [];
   const byStatus = data.by_status || [];
   const bySpecialty = data.by_specialty || [];
+  const dashboardRole = user?.role || data.role;
+  const isDoctorDashboard = dashboardRole === "doctor";
+  const isPatientDashboard = dashboardRole === "paciente";
 
   return (
     <AppShell pageTitle="Dashboard" activePage="dashboard">
       <section className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="text-[1.45rem] font-bold tracking-[-0.02em] text-med-ink">Resumen general</h1>
-          <p className="mt-1 text-sm text-med-ink-muted">Vista consolidada del sistema en tiempo real.</p>
+          <h1 className="text-[1.45rem] font-bold tracking-[-0.02em] text-med-ink">
+            {isPatientDashboard ? "Mi resumen" : isDoctorDashboard ? "Resumen medico" : "Resumen general"}
+          </h1>
+          <p className="mt-1 text-sm text-med-ink-muted">
+            {isPatientDashboard
+              ? "Vista de tus citas, pagos y medicos."
+              : isDoctorDashboard
+                ? "Vista de tus citas, pacientes e ingresos."
+                : "Vista consolidada del sistema en tiempo real."}
+          </p>
         </div>
         <Link className="app-btn-violet justify-center" to="/agenda">
           <Icon className="h-4 w-4">
@@ -97,13 +108,13 @@ export default function DashboardPage() {
       <section className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <StatCard label="Citas hoy" value={stats.today_total} detail={`${stats.today_confirmed} confirmadas`} tone="violet" icon={<CalendarMetricIcon />} loading={loading} />
         <StatCard label="Pendientes" value={stats.pending_total} detail="por confirmar" tone="amber" icon={<AlertMetricIcon />} loading={loading} />
-        <StatCard label="Ingresos hoy" value={formatCurrency(stats.revenue_today)} detail="cobrado" tone="mint" icon={<PaymentMetricIcon />} loading={loading} />
-        <StatCard label="Pacientes" value={stats.patients_count} detail="registrados" tone="rose" icon={<PatientMetricIcon />} loading={loading} />
-        <StatCard label="Medicos" value={stats.doctors_count} detail="activos" tone="teal" icon={<TeamMetricIcon />} loading={loading} />
+        <StatCard label={isPatientDashboard ? "Pagos hoy" : "Ingresos hoy"} value={formatCurrency(stats.revenue_today)} detail={isPatientDashboard ? "pagado" : "cobrado"} tone="mint" icon={<PaymentMetricIcon />} loading={loading} />
+        <StatCard label={isPatientDashboard ? "Mi perfil" : "Pacientes"} value={stats.patients_count} detail={isPatientDashboard ? "paciente activo" : isDoctorDashboard ? "asociados" : "registrados"} tone="rose" icon={<PatientMetricIcon />} loading={loading} />
+        <StatCard label={isDoctorDashboard ? "Mi perfil" : "Medicos"} value={stats.doctors_count} detail={isDoctorDashboard ? "medico activo" : isPatientDashboard ? "asociados" : "activos"} tone="teal" icon={<TeamMetricIcon />} loading={loading} />
       </section>
 
       <section className="mb-6 grid gap-6 xl:grid-cols-[2fr_1fr]">
-        <Card title="Ingresos ultimos 6 meses">
+        <Card title={isPatientDashboard ? "Pagos ultimos 6 meses" : "Ingresos ultimos 6 meses"}>
           <RevenueBars data={monthlyRevenue} loading={loading} />
         </Card>
         <Card title="Estado de citas">
@@ -324,9 +335,11 @@ function QuickActions({ role }) {
       <Link className="app-btn-violet justify-center" to="/agenda">
         Nueva cita
       </Link>
-      <Link className="app-btn-outline justify-center" to="/patients/new">
-        Nuevo paciente
-      </Link>
+      {role !== "paciente" ? (
+        <Link className="app-btn-outline justify-center" to="/patients/new">
+          Nuevo paciente
+        </Link>
+      ) : null}
       {["doctor", "admin", "staff"].includes(role) ? (
         <Link className="app-btn-ghost justify-center" to="/prescriptions/create">
           Nueva receta

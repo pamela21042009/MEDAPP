@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Dict, List, Optional
 from datetime import datetime
 from .database import DatabaseService
+from .email_service import EmailService
 
 
 class NotificationService:
@@ -52,10 +53,36 @@ class NotificationService:
 
     # ── Helpers para disparar notifs automáticas ──────────
     def notify_appointment_confirmed(self, user_id: int, appt_date: str, doctor_name: str):
-        self.create(user_id, "reminder",
+        self.create(user_id, "confirmation",
                     "Cita confirmada",
                     f"Tu cita del {appt_date} con {doctor_name} fue confirmada.",
                     "/agenda")
+
+    def email_appointment_confirmed(self, to_email: str, patient_name: str, appt_date: str, doctor_name: str) -> bool:
+        name = patient_name or "paciente"
+        return EmailService().send(
+            to_email,
+            "Cita confirmada - MedApp",
+            (
+                f"Hola {name},\n\n"
+                f"Tu cita del {appt_date} con {doctor_name} fue confirmada.\n\n"
+                "Puedes revisar los detalles entrando a MedApp en la seccion Agenda.\n\n"
+                "Gracias por usar MedApp."
+            ),
+        )
+
+    def email_appointment_reminder(self, to_email: str, patient_name: str, appt_date: str, doctor_name: str) -> bool:
+        name = patient_name or "paciente"
+        return EmailService().send(
+            to_email,
+            "Recordatorio de cita - MedApp",
+            (
+                f"Hola {name},\n\n"
+                f"Te recordamos que tienes una cita el {appt_date} con {doctor_name}.\n\n"
+                "Por favor llega unos minutos antes y revisa tu agenda en MedApp si necesitas confirmar detalles.\n\n"
+                "Gracias por usar MedApp."
+            ),
+        )
 
     def notify_payment_received(self, user_id: int, amount: float, reference: str):
         self.create(user_id, "payment",

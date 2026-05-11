@@ -8,6 +8,7 @@ import {
   changeSettingsPassword,
   getSettingsBootstrap,
   updateSettingsProfile,
+  uploadSettingsAvatar,
   updateSystemSettings,
 } from "../lib/settings";
 
@@ -31,6 +32,8 @@ export default function SettingsPage() {
   const [systemConfig, setSystemConfig] = useState({});
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarNotice, setAvatarNotice] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
   const [savingSystem, setSavingSystem] = useState(false);
   const [error, setError] = useState("");
@@ -102,6 +105,36 @@ export default function SettingsPage() {
     }
   }
 
+  async function handleAvatarFile(event) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      setError("Selecciona una imagen PNG, JPG, JPEG o WEBP.");
+      event.target.value = "";
+      return;
+    }
+
+    setUploadingAvatar(true);
+    setAvatarNotice("");
+    setError("");
+    try {
+      const result = await uploadSettingsAvatar(file);
+      setProfile((current) => ({ ...current, avatar_url: result.avatar_url || "" }));
+      if (result?.user) {
+        setUser(result.user);
+      }
+      setAvatarNotice("Foto actualizada correctamente.");
+      setToast(result?.message || "Foto actualizada.");
+    } catch (err) {
+      setError(err.message || "No fue posible subir la imagen.");
+    } finally {
+      setUploadingAvatar(false);
+      event.target.value = "";
+    }
+  }
+
   async function handlePasswordSubmit(event) {
     event.preventDefault();
     setSavingPassword(true);
@@ -167,7 +200,18 @@ export default function SettingsPage() {
                 />
                 <div className="min-w-0">
                   <div className="font-semibold text-med-ink">Vista previa</div>
-                  <div className="text-sm text-med-ink-muted">Pega una URL publica de imagen para usarla como foto de perfil.</div>
+                  <div className="text-sm text-med-ink-muted">Selecciona una imagen desde tu equipo para usarla como foto de perfil.</div>
+                  <div className="mt-3">
+                    <input
+                      className="block w-full text-sm text-med-ink-muted file:mr-3 file:rounded-lg file:border-0 file:bg-med-violet file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={handleAvatarFile}
+                      disabled={uploadingAvatar || loading}
+                    />
+                    {uploadingAvatar ? <div className="mt-2 text-xs text-med-violet">Subiendo imagen...</div> : null}
+                    {avatarNotice ? <div className="mt-2 text-xs text-[#1f7a3a]">{avatarNotice}</div> : null}
+                  </div>
                 </div>
               </div>
               <Field label="Nombre">
@@ -178,9 +222,6 @@ export default function SettingsPage() {
               </Field>
               <Field label="Telefono">
                 <input className="med-input px-4 py-3" value={profile.phone} onChange={(event) => setProfile((current) => ({ ...current, phone: event.target.value }))} />
-              </Field>
-              <Field label="URL de foto de perfil">
-                <input className="med-input px-4 py-3" value={profile.avatar_url} onChange={(event) => setProfile((current) => ({ ...current, avatar_url: event.target.value }))} placeholder="https://.../foto.jpg" />
               </Field>
               <Field label="Correo electronico">
                 <input className="med-input cursor-not-allowed bg-med-bg px-4 py-3 text-med-ink-muted" value={profile.email} disabled />

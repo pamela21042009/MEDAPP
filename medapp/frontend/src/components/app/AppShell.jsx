@@ -19,6 +19,7 @@ const NAV_SECTIONS = [
     items: [
       { key: "doctors", label: "Medicos", kind: "react", to: "/doctors", roles: ["admin", "doctor", "staff", "paciente"], icon: TeamIcon },
       { key: "patients", label: "Pacientes", kind: "react", to: "/patients", roles: ["admin", "doctor", "staff", "paciente"], icon: PatientIcon },
+      { key: "catalogs", label: "Catalogos", kind: "react", to: "/catalogs", roles: ["admin", "doctor", "staff"], icon: CatalogIcon },
     ],
   },
   {
@@ -34,7 +35,7 @@ const NAV_SECTIONS = [
     items: [
       { key: "schedule", label: "Horarios", kind: "react", to: "/schedule", roles: ["doctor", "admin", "staff"], icon: ClockIcon },
       { key: "payments", label: "Pagos", kind: "react", to: "/payments", roles: ["admin", "staff", "secretaria", "doctor", "paciente"], icon: CardIcon },
-      { key: "reports", label: "Reportes", kind: "react", to: "/reports", roles: ["admin", "staff"], icon: ReportIcon },
+      { key: "reports", label: "Reportes", kind: "react", to: "/reports", roles: ["admin", "doctor", "staff", "paciente"], icon: ReportIcon },
     ],
   },
   {
@@ -359,6 +360,17 @@ function BellIcon({ className }) {
       <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V5a2 2 0 1 0-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5" />
       <path d="M9 17h6" />
       <path d="M10 20a2 2 0 0 0 4 0" />
+    </Icon>
+  );
+}
+
+function CatalogIcon({ className }) {
+  return (
+    <Icon className={className}>
+      <path d="M4 19.5V6a2 2 0 0 1 2-2h5v16H6a2 2 0 0 1-2-2.5Z" />
+      <path d="M13 4h5a2 2 0 0 1 2 2v13.5a2 2 0 0 0-2-2.5h-5V4Z" />
+      <path d="M8 8h1" />
+      <path d="M15 8h1" />
     </Icon>
   );
 }

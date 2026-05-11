@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import AppShell from "../components/app/AppShell";
 import Icon from "../components/ui/Icon";
 import ProfileAvatar from "../components/ui/ProfileAvatar";
-import { createDoctor, getDoctorDetail, getDoctorsBootstrap, updateDoctor } from "../lib/doctors";
+import { createDoctor, getDoctorDetail, getDoctorsBootstrap, updateDoctor, uploadDoctorAvatar } from "../lib/doctors";
 
 const EMPTY_FORM = {
   full_name: "",
@@ -53,6 +53,8 @@ export default function DoctorFormPage() {
   const [permissions, setPermissions] = useState({ can_edit: false });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarNotice, setAvatarNotice] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -104,6 +106,11 @@ export default function DoctorFormPage() {
   }, [doctorId, editing]);
 
   const canManage = Boolean(bootstrap?.can_manage);
+  const canUploadAvatar = editing && (
+    canManage ||
+    (bootstrap?.role === "doctor" && String(bootstrap?.current_doctor_id || "") === String(doctorId))
+  );
+  const specialtyOptions = Array.from(new Set([...(bootstrap?.specialties || []), form.specialty].filter(Boolean)));
   const submitLabel = useMemo(() => {
     if (saving) {
       return editing ? "Guardando..." : "Registrando...";
@@ -138,6 +145,30 @@ export default function DoctorFormPage() {
     } catch (err) {
       setError(err.message || "No fue posible guardar el medico.");
       setSaving(false);
+    }
+  }
+
+  async function handleAvatarUpload(event) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      setError("Selecciona una imagen PNG, JPG, JPEG o WEBP.");
+      return;
+    }
+    setUploadingAvatar(true);
+    setAvatarNotice("");
+    setError("");
+    try {
+      const result = await uploadDoctorAvatar(doctorId, file);
+      setForm((current) => ({ ...current, avatar_url: result.avatar_url || "" }));
+      setAvatarNotice("Foto actualizada correctamente.");
+    } catch (err) {
+      setError(err.message || "No fue posible subir la imagen.");
+    } finally {
+      setUploadingAvatar(false);
+      event.target.value = "";
     }
   }
 
@@ -200,7 +231,22 @@ export default function DoctorFormPage() {
                 />
                 <div className="text-sm text-med-ink-muted">
                   <div className="font-semibold text-med-ink">Foto del medico</div>
-                  Usa una URL publica para mostrar la foto en el directorio y el perfil.
+                  {canUploadAvatar
+                    ? "Sube una imagen desde tu equipo para mostrarla en el directorio y el perfil."
+                    : "La foto puede subirse al editar un perfil medico existente."}
+                  {canUploadAvatar ? (
+                    <div className="mt-3">
+                      <input
+                        className="block w-full text-sm text-med-ink-muted file:mr-3 file:rounded-lg file:border-0 file:bg-med-violet file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={handleAvatarUpload}
+                        disabled={uploadingAvatar}
+                      />
+                      {uploadingAvatar ? <div className="mt-2 text-xs text-med-violet">Subiendo imagen...</div> : null}
+                      {avatarNotice ? <div className="mt-2 text-xs text-[#1f7a3a]">{avatarNotice}</div> : null}
+                    </div>
+                  ) : null}
                 </div>
               </div>
               <div className="grid gap-5 md:grid-cols-2">
@@ -216,14 +262,19 @@ export default function DoctorFormPage() {
                 </Field>
 
                 <Field label="Especialidad *">
-                  <input
+                  <select
                     className="med-input px-4 py-3"
-                    type="text"
                     value={form.specialty}
                     onChange={(event) => setForm((current) => ({ ...current, specialty: event.target.value }))}
-                    placeholder="Ej. Cardiologia"
                     required
-                  />
+                  >
+                    <option value="">Seleccionar especialidad</option>
+                    {specialtyOptions.map((specialty) => (
+                      <option key={specialty} value={specialty}>
+                        {specialty}
+                      </option>
+                    ))}
+                  </select>
                 </Field>
 
                 <Field label="Numero de licencia">
@@ -253,16 +304,6 @@ export default function DoctorFormPage() {
                     value={form.phone}
                     onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))}
                     placeholder="+1 (809) 000-0000"
-                  />
-                </Field>
-
-                <Field label="URL de foto de perfil" className="md:col-span-2">
-                  <input
-                    className="med-input px-4 py-3"
-                    type="url"
-                    value={form.avatar_url}
-                    onChange={(event) => setForm((current) => ({ ...current, avatar_url: event.target.value }))}
-                    placeholder="https://.../medico.jpg"
                   />
                 </Field>
 

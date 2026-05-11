@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import AppShell from "../components/app/AppShell";
 import Icon from "../components/ui/Icon";
 import ProfileAvatar from "../components/ui/ProfileAvatar";
-import { createPatient, getPatientDetail, getPatientsBootstrap, updatePatient } from "../lib/patients";
+import { createPatient, getPatientDetail, getPatientsBootstrap, updatePatient, uploadPatientAvatar } from "../lib/patients";
 
 const EMPTY_FORM = {
   full_name: "",
@@ -47,6 +47,9 @@ export default function PatientFormPage() {
   const [permissions, setPermissions] = useState({ can_edit: false });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState(null);
+  const [avatarNotice, setAvatarNotice] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -119,13 +122,53 @@ export default function PatientFormPage() {
       if (editing) {
         result = await updatePatient(patientId, form);
       } else {
-        result = await createPatient(form);
+        result = await createPatient({
+          ...form,
+          avatar_url: pendingAvatarFile ? "" : form.avatar_url,
+        });
+      }
+
+      if (!editing && pendingAvatarFile && result?.id) {
+        result = await uploadPatientAvatar(result.id, pendingAvatarFile).then((payload) => payload?.patient || result);
       }
 
       navigate(`/patients/${result.id || patientId}`, { replace: true });
     } catch (err) {
       setError(err.message || "No fue posible guardar el paciente.");
       setSaving(false);
+    }
+  }
+
+  async function handleAvatarFile(event) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      setError("Selecciona una imagen PNG, JPG, JPEG o WEBP.");
+      event.target.value = "";
+      return;
+    }
+
+    setError("");
+    setAvatarNotice("");
+    if (!editing) {
+      setPendingAvatarFile(file);
+      setForm((current) => ({ ...current, avatar_url: URL.createObjectURL(file) }));
+      setAvatarNotice("Imagen seleccionada. Se subira cuando guardes el paciente.");
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const result = await uploadPatientAvatar(patientId, file);
+      setForm((current) => ({ ...current, avatar_url: result.avatar_url || "" }));
+      setAvatarNotice("Foto actualizada correctamente.");
+    } catch (err) {
+      setError(err.message || "No fue posible subir la imagen.");
+    } finally {
+      setUploadingAvatar(false);
+      event.target.value = "";
     }
   }
 
@@ -188,7 +231,18 @@ export default function PatientFormPage() {
                 />
                 <div className="text-sm text-med-ink-muted">
                   <div className="font-semibold text-med-ink">Foto del paciente</div>
-                  Usa una URL publica para mostrar la foto en el expediente y el listado.
+                  Selecciona una imagen desde tu equipo para mostrarla en el expediente y el listado.
+                  <div className="mt-3">
+                    <input
+                      className="block w-full text-sm text-med-ink-muted file:mr-3 file:rounded-lg file:border-0 file:bg-med-violet file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={handleAvatarFile}
+                      disabled={uploadingAvatar}
+                    />
+                    {uploadingAvatar ? <div className="mt-2 text-xs text-med-violet">Subiendo imagen...</div> : null}
+                    {avatarNotice ? <div className="mt-2 text-xs text-[#1f7a3a]">{avatarNotice}</div> : null}
+                  </div>
                 </div>
               </div>
               <div className="grid gap-5 md:grid-cols-2">
@@ -217,16 +271,6 @@ export default function PatientFormPage() {
                     type="tel"
                     value={form.phone}
                     onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))}
-                  />
-                </Field>
-
-                <Field label="URL de foto de perfil" className="md:col-span-2">
-                  <input
-                    className="med-input px-4 py-3"
-                    type="url"
-                    value={form.avatar_url}
-                    onChange={(event) => setForm((current) => ({ ...current, avatar_url: event.target.value }))}
-                    placeholder="https://.../paciente.jpg"
                   />
                 </Field>
 

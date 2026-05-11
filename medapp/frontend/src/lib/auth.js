@@ -24,6 +24,10 @@ export function registerUser(payload) {
   });
 }
 
+export function getRegistrationSpecialties() {
+  return apiRequest("/auth/api/specialties");
+}
+
 export function requestPasswordReset(payload) {
   return apiRequest("/auth/api/forgot-password", {
     method: "POST",

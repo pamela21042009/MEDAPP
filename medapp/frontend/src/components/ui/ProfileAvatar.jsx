@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toBackendUrl } from "../../lib/api";
 
 function getInitials(name = "", fallback = "US") {
   const initials = name
@@ -27,9 +28,10 @@ export default function ProfileAvatar({
   }, [src]);
 
   if (src && !broken) {
+    const resolvedSrc = String(src).startsWith("/uploads/") ? toBackendUrl(src) : src;
     return (
       <img
-        src={src}
+        src={resolvedSrc}
         alt={alt || name || "Foto de perfil"}
         className={`object-cover ${className}`}
         onError={() => setBroken(true)}

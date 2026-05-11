@@ -37,10 +37,13 @@ export function rescheduleAgendaAppointment(appointmentId, payload) {
   });
 }
 
-export function getAgendaSlots(doctorId, date) {
+export function getAgendaSlots(doctorId, date, appointmentId = "") {
   const params = new URLSearchParams({
     doctor_id: String(doctorId),
     date,
   });
+  if (appointmentId) {
+    params.set("appointment_id", String(appointmentId));
+  }
   return apiRequest(`/agenda/api/slots?${params.toString()}`);
 }

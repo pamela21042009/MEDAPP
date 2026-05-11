@@ -50,7 +50,37 @@ def current_user() -> dict[str, Any]:
         "full_name": session.get("user_name", "Usuario"),
         "role": role,
         "email": session.get("user_email", ""),
+        "avatar_url": session.get("user_avatar_url", ""),
     }
+
+
+def current_doctor_id() -> int | None:
+    user = current_user()
+    if user.get("id"):
+        rows = select("doctors", "id,user_id,email", {"user_id": user["id"]})
+        if rows:
+            return rows[0].get("id")
+    if user.get("email"):
+        rows = select("doctors", "id,user_id,email", {"email": user["email"]})
+        if rows:
+            return rows[0].get("id")
+    return None
+
+
+def current_patient_id() -> int | None:
+    user = current_user()
+    if user.get("id"):
+        rows = select("patients", "id,user_id,email", {"user_id": user["id"]})
+        if rows:
+            return rows[0].get("id")
+    if user.get("email"):
+        rows = select("patients", "id,user_id,email", {"email": user["email"]})
+        if rows:
+            return rows[0].get("id")
+        rows = select("patients", "id,email", {"email": user["email"]})
+        if rows:
+            return rows[0].get("id")
+    return None
 
 
 def role() -> str:
@@ -59,6 +89,34 @@ def role() -> str:
 
 def can_manage() -> bool:
     return role() in {"admin", "staff", "secretaria"}
+
+
+def log_event(action: str, entity: str = "", entity_id: Any = None, details: dict[str, Any] | None = None) -> None:
+    details = details or {}
+    audit_log_data = {
+        "user_id": session.get("user_id"),
+        "action": str(action or "").upper(),
+        "table_name": entity or "",
+        "record_id": entity_id,
+        "new_values": details,
+        "ip_address": request.remote_addr or "",
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    database = db()
+    if database.insert("audit_log", audit_log_data):
+        return
+
+    data = {
+        "user_id": session.get("user_id"),
+        "user_name": session.get("user_name", ""),
+        "role": role(),
+        "action": action,
+        "entity": entity,
+        "entity_id": entity_id,
+        "details": details,
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    database.insert("audit_logs", data)
 
 
 def select(table: str, columns: str = "*", filters: dict[str, Any] | None = None) -> list[dict[str, Any]]:
@@ -99,6 +157,14 @@ def payments() -> list[dict[str, Any]]:
 
 
 def specialties() -> list[str]:
+    rows = select("specialties", "name,is_active")
+    if rows:
+        return sorted({
+            str(item.get("name") or "").strip()
+            for item in rows
+            if item.get("is_active") is not False and str(item.get("name") or "").strip()
+        })
+
     values = []
     for item in doctors():
         specialty = item.get("specialty")

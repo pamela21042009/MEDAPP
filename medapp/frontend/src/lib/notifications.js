@@ -19,3 +19,9 @@ export function markAllNotificationsRead() {
     method: "POST",
   });
 }
+
+export function runAppointmentReminders() {
+  return apiRequest("/notifications/api/reminders/run", {
+    method: "POST",
+  });
+}

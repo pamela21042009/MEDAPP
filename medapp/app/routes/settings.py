@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from flask import Blueprint, session
+from flask import Blueprint, request, session
 
-from .api_helpers import current_user, ok, payload, role, update
+from .api_helpers import current_user, fail, ok, payload, role, update
+from .avatar_upload import upload_avatar_to_supabase
 
 bp = Blueprint("settings", __name__, url_prefix="/settings")
 
@@ -36,6 +37,27 @@ def api_profile():
     if session.get("user_id"):
         update("users", int(session["user_id"]), {"full_name": name, **data})
     return ok({"message": "Perfil actualizado.", "user": current_user()})
+
+
+@bp.route("/api/profile/avatar", methods=["POST"])
+def api_profile_avatar():
+    if not session.get("user_id"):
+        return fail("Sesion no disponible.", 401)
+
+    file = request.files.get("avatar")
+    if not file or not file.filename:
+        return fail("Selecciona una imagen desde tu equipo.", 400)
+
+    try:
+        avatar_url = upload_avatar_to_supabase(f"users/user-{session['user_id']}", file)
+    except Exception as exc:
+        return fail(f"No fue posible subir la imagen. Detalle: {exc}", 500)
+    if not avatar_url:
+        return fail("La imagen debe ser PNG, JPG, JPEG o WEBP.", 400)
+
+    update("users", int(session["user_id"]), {"avatar_url": avatar_url})
+    session["user_avatar_url"] = avatar_url
+    return ok({"message": "Foto actualizada.", "avatar_url": avatar_url, "user": current_user()})
 
 
 @bp.route("/api/password", methods=["POST"])
