@@ -1,10 +1,25 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from flask import Blueprint, jsonify, request
 
-from .api_helpers import by_id, current_patient_id, current_user, db, fail, insert, log_event, ok, patients, payload, role, select, update
+from .api_helpers import (
+    by_id,
+    current_patient_id,
+    current_user,
+    db,
+    fail,
+    insert,
+    log_event,
+    ok,
+    patient_belongs_to_doctor,
+    payload,
+    role,
+    select,
+    update,
+    visible_patients,
+)
 from .avatar_upload import upload_avatar_to_supabase
 
 bp = Blueprint("patients", __name__, url_prefix="/patients")
@@ -25,6 +40,16 @@ PATIENT_COLUMNS = {
 
 def can_manage_patients() -> bool:
     return role() in {"admin", "staff", "secretaria", "doctor"}
+
+
+def can_manage_all_patients() -> bool:
+    return role() in {"admin", "staff", "secretaria"}
+
+
+def can_create_patients() -> bool:
+    if can_manage_all_patients():
+        return True
+    return role() == "doctor" and bool(current_doctor_id())
 
 
 def clean_patient_payload(data: dict, allow_avatar: bool = False) -> dict:
@@ -59,22 +84,52 @@ def ensure_current_patient_id() -> int | None:
 
 
 def can_view_patient(patient_id: int) -> bool:
-    if can_manage_patients():
+    if can_manage_all_patients():
         return True
-    if role() != "paciente":
-        return False
-    return str(ensure_current_patient_id() or "") == str(patient_id)
+    current_role = role()
+    if current_role == "doctor":
+        return patient_belongs_to_doctor(patient_id, current_doctor_id())
+    if current_role == "paciente":
+        return str(ensure_current_patient_id() or "") == str(patient_id)
+    return False
+
+
+def filter_patient_list(items: list[dict]) -> list[dict]:
+    query = str(request.args.get("q") or request.args.get("search") or "").strip().lower()
+    if not query:
+        return items
+    return [
+        item for item in items
+        if query in str(item.get("full_name") or "").lower()
+        or query in str(item.get("email") or "").lower()
+        or query in str(item.get("phone") or "").lower()
+        or query in str(item.get("insurance_number") or "").lower()
+    ]
 
 
 def patient_payload(item: dict) -> dict:
-    can_edit = can_manage_patients()
+    can_edit = can_manage_patients() and can_view_patient(int(item.get("id") or 0))
     patient_id = item.get("id")
+    history = select("appointments", "*", {"patient_id": patient_id}) if patient_id else []
     clinical_history = select("medical_history", "*", {"patient_id": patient_id}) if patient_id else []
-    if not clinical_history and patient_id:
+
+    if role() == "doctor":
+        doctor_id = current_doctor_id()
+        history = [
+            appointment for appointment in history
+            if str(appointment.get("doctor_id") or "") == str(doctor_id)
+        ]
+        clinical_history = [
+            entry for entry in clinical_history
+            if str(entry.get("doctor_id") or "") == str(doctor_id)
+        ]
+
+    if not clinical_history and patient_id and role() != "doctor":
         clinical_history = select("clinical_history", "*", {"patient_id": patient_id})
+
     return {
         "patient": item,
-        "history": select("appointments", "*", {"patient_id": patient_id}) if patient_id else [],
+        "history": history,
         "clinical_history": clinical_history,
         "vital_signs": select("vital_signs", "*", {"patient_id": patient_id}) if patient_id else [],
         "documents": select("patient_documents", "*", {"patient_id": patient_id}) if patient_id else [],
@@ -98,6 +153,44 @@ def current_doctor_id() -> int | None:
         if doctors:
             return doctors[0].get("id")
     return None
+
+
+def link_patient_to_current_doctor(patient_id: int | None) -> bool:
+    if role() != "doctor":
+        return True
+
+    doctor_id = current_doctor_id()
+    if not patient_id or not doctor_id:
+        return False
+
+    now = datetime.now(timezone.utc).isoformat()
+    base = {
+        "patient_id": patient_id,
+        "doctor_id": doctor_id,
+        "visit_date": date.today().isoformat(),
+        "diagnosis": "Registro de paciente",
+        "treatment": "",
+        "notes": "Paciente registrado desde el perfil del medico.",
+        "created_at": now,
+    }
+    attempts = [
+        base,
+        {key: value for key, value in base.items() if key != "created_at"},
+        {key: value for key, value in base.items() if key not in {"created_at", "treatment"}},
+        {"patient_id": patient_id, "doctor_id": doctor_id, "notes": base["notes"]},
+        {"patient_id": patient_id, "doctor_id": doctor_id},
+    ]
+
+    seen = set()
+    for attempt in attempts:
+        signature = tuple(sorted(attempt.keys()))
+        if signature in seen:
+            continue
+        seen.add(signature)
+        if insert("medical_history", attempt):
+            log_event("doctor_patient_linked", "patients", patient_id, {"doctor_id": doctor_id})
+            return True
+    return False
 
 
 def clean_vitals_payload(raw: dict, patient_id: int) -> dict:
@@ -148,7 +241,9 @@ def api_bootstrap():
     return ok({
         "role": role(),
         "can_manage": can_manage_patients(),
+        "can_create": can_create_patients(),
         "current_patient_id": ensure_current_patient_id() if role() == "paciente" else None,
+        "current_doctor_id": current_doctor_id() if role() == "doctor" else None,
     })
 
 
@@ -158,7 +253,7 @@ def api_list():
         patient_id = ensure_current_patient_id()
         item = by_id("patients", patient_id) if patient_id else None
         return jsonify([item] if item else [])
-    return jsonify(patients())
+    return jsonify(filter_patient_list(visible_patients()))
 
 
 @bp.route("/api/search")
@@ -167,7 +262,7 @@ def api_search():
         patient_id = ensure_current_patient_id()
         item = by_id("patients", patient_id) if patient_id else None
         return jsonify([item] if item else [])
-    return jsonify(patients())
+    return jsonify(filter_patient_list(visible_patients()))
 
 
 @bp.route("/api/<int:patient_id>")
@@ -182,12 +277,19 @@ def api_detail(patient_id: int):
 
 @bp.route("/api", methods=["POST"])
 def api_create():
-    if not can_manage_patients():
+    if not can_create_patients():
         return fail("No tienes permiso para registrar pacientes.", 403)
     item = insert("patients", clean_patient_payload(payload(), allow_avatar=False))
     if not item:
         detail = db().get_last_error()
         return fail(f"No fue posible crear el paciente. Detalle: {detail}" if detail else "No fue posible crear el paciente.", 500)
+    if role() == "doctor" and not link_patient_to_current_doctor(item.get("id")):
+        detail = db().get_last_error()
+        return fail(
+            "Paciente creado, pero no fue posible asociarlo a tu perfil medico."
+            + (f" Detalle: {detail}" if detail else ""),
+            500,
+        )
     log_event("create", "patients", item.get("id"))
     return ok(item)
 
@@ -196,6 +298,8 @@ def api_create():
 def api_update(patient_id: int):
     if not can_manage_patients():
         return fail("No tienes permiso para editar pacientes.", 403)
+    if not can_view_patient(patient_id):
+        return fail("Paciente no encontrado.", 404)
     item = update("patients", patient_id, clean_patient_payload(payload(), allow_avatar=False))
     if not item:
         detail = db().get_last_error()
@@ -229,15 +333,24 @@ def api_upload_avatar(patient_id: int):
 
 @bp.route("/api/<int:patient_id>/appointments/<int:appointment_id>/notes", methods=["PUT"])
 def api_notes(patient_id: int, appointment_id: int):
+    if not can_manage_patients() or not can_view_patient(patient_id):
+        return fail("Paciente no encontrado.", 404)
+    appointment = by_id("appointments", appointment_id)
+    if not appointment or str(appointment.get("patient_id") or "") != str(patient_id):
+        return fail("Cita no encontrada.", 404)
+    if role() == "doctor" and str(appointment.get("doctor_id") or "") != str(current_doctor_id()):
+        return fail("Cita no encontrada.", 404)
     item = update("appointments", appointment_id, payload())
     log_event("clinical_note", "appointments", appointment_id, {"patient_id": patient_id})
-    return ok({"item": item, "patient_id": patient_id})
+    return ok({"item": item, "appointment": item, "patient_id": patient_id})
 
 
 @bp.route("/api/<int:patient_id>/clinical-history", methods=["POST"])
 def api_clinical_history(patient_id: int):
     if not can_manage_patients():
         return fail("No tienes permiso para registrar historial clinico.", 403)
+    if not can_view_patient(patient_id):
+        return fail("Paciente no encontrado.", 404)
     data = payload()
     data["patient_id"] = patient_id
     doctor_id = current_doctor_id()
@@ -254,6 +367,8 @@ def api_clinical_history(patient_id: int):
 def api_vitals(patient_id: int):
     if not can_manage_patients():
         return fail("No tienes permiso para registrar signos vitales.", 403)
+    if not can_view_patient(patient_id):
+        return fail("Paciente no encontrado.", 404)
     data = clean_vitals_payload(payload(), patient_id)
     item = insert_vitals(data)
     if not item:
@@ -267,6 +382,8 @@ def api_vitals(patient_id: int):
 def api_documents(patient_id: int):
     if not can_manage_patients():
         return fail("No tienes permiso para registrar documentos.", 403)
+    if not can_view_patient(patient_id):
+        return fail("Paciente no encontrado.", 404)
     data = payload()
     data["patient_id"] = patient_id
     item = insert("patient_documents", data)

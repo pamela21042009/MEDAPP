@@ -55,6 +55,7 @@ export default function DoctorFormPage() {
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarNotice, setAvatarNotice] = useState("");
+  const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -125,6 +126,7 @@ export default function DoctorFormPage() {
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
+    setNotice("");
     setSaving(true);
 
     try {
@@ -137,11 +139,16 @@ export default function DoctorFormPage() {
       let result;
       if (editing) {
         result = await updateDoctor(doctorId, payload);
+        navigate(`/doctors/${result?.doctor?.id || result?.item?.id || doctorId}`, { replace: true });
       } else {
         result = await createDoctor(payload);
+        setNotice(result?.invite_link
+          ? `${result.message} Enlace de prueba: ${result.invite_link}`
+          : result?.message || "Invitacion enviada al doctor.");
+        setForm(EMPTY_FORM);
+        setSaving(false);
+        return;
       }
-
-      navigate(`/doctors/${result.id || doctorId}`, { replace: true });
     } catch (err) {
       setError(err.message || "No fue posible guardar el medico.");
       setSaving(false);
@@ -215,6 +222,12 @@ export default function DoctorFormPage() {
           {error ? (
             <div className="mb-6 rounded-2xl border border-[rgba(247,37,133,0.22)] bg-[rgba(247,37,133,0.08)] px-4 py-3 text-sm text-[#c0185a]">
               {error}
+            </div>
+          ) : null}
+
+          {notice ? (
+            <div className="mb-6 rounded-2xl border border-[rgba(128,237,153,0.35)] bg-white px-4 py-3 text-sm leading-6 text-[#1f7a3a] shadow-sm">
+              {notice}
             </div>
           ) : null}
 

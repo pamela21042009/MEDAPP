@@ -24,7 +24,7 @@ export function getDoctorDetail(doctorId) {
 }
 
 export function createDoctor(payload) {
-  return apiRequest("/doctors/api", {
+  return apiRequest("/auth/api/admin/doctors/invite", {
     method: "POST",
     body: JSON.stringify(payload),
   });

@@ -6,7 +6,7 @@ from uuid import uuid4
 from flask import Blueprint, request
 from werkzeug.utils import secure_filename
 
-from .api_helpers import by_id, can_manage, current_doctor_id, db, doctors, fail, insert, log_event, ok, payload, role, specialties, update
+from .api_helpers import by_id, can_manage, current_doctor_id, db, doctors, fail, log_event, ok, payload, role, specialties, update
 from .avatar_upload import upload_avatar_to_supabase
 
 bp = Blueprint("doctors", __name__, url_prefix="/doctors")
@@ -147,10 +147,7 @@ def api_detail(doctor_id: int):
 def api_create():
     if not can_manage():
         return fail("No tienes permiso para crear medicos.", 403)
-    item = insert("doctors", clean_doctor_payload(payload(), allow_avatar=False))
-    if not item:
-        return fail("No fue posible crear el medico.", 500)
-    return ok({"item": item, "doctor": item})
+    return fail("Los medicos deben crearse mediante invitacion desde /auth/api/admin/doctors/invite.", 400)
 
 
 @bp.route("/api/<int:doctor_id>", methods=["PUT"])

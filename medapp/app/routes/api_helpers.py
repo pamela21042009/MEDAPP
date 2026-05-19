@@ -6,6 +6,7 @@ from typing import Any
 from flask import jsonify, request, session
 
 from app.services.database import DatabaseService
+from app.services.security import current_identity
 
 
 STATUS_LABELS = {
@@ -43,12 +44,22 @@ def fail(message: str, status: int = 400):
 
 
 def current_user() -> dict[str, Any]:
-    role = session.get("user_role", "staff")
+    identity = current_identity()
+    if identity:
+        return {
+            "id": identity.get("id"),
+            "name": identity.get("name") or identity.get("full_name") or "Usuario",
+            "full_name": identity.get("full_name") or identity.get("name") or "Usuario",
+            "role": identity.get("role", "staff"),
+            "email": identity.get("email", ""),
+            "avatar_url": identity.get("avatar_url", ""),
+        }
+    current_role = session.get("user_role", "staff")
     return {
         "id": session.get("user_id"),
         "name": session.get("user_name", "Usuario"),
         "full_name": session.get("user_name", "Usuario"),
-        "role": role,
+        "role": current_role,
         "email": session.get("user_email", ""),
         "avatar_url": session.get("user_avatar_url", ""),
     }
@@ -84,11 +95,11 @@ def current_patient_id() -> int | None:
 
 
 def role() -> str:
-    return str(session.get("user_role") or "staff")
+    return str(current_user().get("role") or "staff")
 
 
 def can_manage() -> bool:
-    return role() in {"admin", "staff", "secretaria"}
+    return role() == "admin"
 
 
 def log_event(action: str, entity: str = "", entity_id: Any = None, details: dict[str, Any] | None = None) -> None:
@@ -146,6 +157,39 @@ def doctors() -> list[dict[str, Any]]:
 
 def patients() -> list[dict[str, Any]]:
     return select("patients", "*")
+
+
+def patient_ids_for_doctor(doctor_id: int | None = None) -> set[Any]:
+    doctor_id = doctor_id or current_doctor_id()
+    if not doctor_id:
+        return set()
+
+    patient_ids: set[Any] = set()
+    for table in ("appointments", "prescriptions", "medical_history"):
+        for item in select(table, "patient_id", {"doctor_id": doctor_id}):
+            patient_id = item.get("patient_id")
+            if patient_id:
+                patient_ids.add(patient_id)
+    return patient_ids
+
+
+def patient_belongs_to_doctor(patient_id: int | None, doctor_id: int | None = None) -> bool:
+    if not patient_id:
+        return False
+    return str(patient_id) in {str(item) for item in patient_ids_for_doctor(doctor_id)}
+
+
+def visible_patients() -> list[dict[str, Any]]:
+    current_role = role()
+    if current_role == "paciente":
+        patient_id = current_patient_id()
+        return [item for item in patients() if str(item.get("id") or "") == str(patient_id)]
+
+    if current_role != "doctor":
+        return patients()
+
+    allowed_ids = {str(item) for item in patient_ids_for_doctor()}
+    return [item for item in patients() if str(item.get("id") or "") in allowed_ids]
 
 
 def appointments() -> list[dict[str, Any]]:

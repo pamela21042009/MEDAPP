@@ -307,5 +307,5 @@ Proyecto desarrollado como sistema academico/profesional para la gestion de cita
 
 - Nombre del proyecto: MedApp.
 - Equipo responsable: Pamela Reding
-- Cliente o institucion beneficiaria: todos centros medicos
+- Responsable proyecto: Jose Rijo
 - Fecha de documentacion:  30 abril de 2026.

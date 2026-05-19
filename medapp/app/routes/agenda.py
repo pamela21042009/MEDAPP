@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from flask import Blueprint, current_app, jsonify, request
 
-from .api_helpers import appointments, by_id, current_patient_id, current_user, db, doctors, fail, insert, log_event, next_slots, ok, patients, payload, role, select, specialties, update
+from .api_helpers import appointments, by_id, current_patient_id, current_user, db, doctors, fail, insert, log_event, next_slots, ok, patients, payload, role, select, specialties, update, visible_patients
 from app.services.notification_service import NotificationService
 from app.services.schedule_service import ScheduleService
 
@@ -123,7 +123,7 @@ def _notify_appointment_confirmed(appointment: dict | None, previous_status: str
 @bp.route("/api/bootstrap")
 def api_bootstrap():
     patient_id = ensure_current_patient_id() if role() == "paciente" else None
-    patient_items = patients()
+    patient_items = visible_patients()
     if role() == "paciente":
         patient_items = [item for item in patient_items if str(item.get("id") or "") == str(patient_id)]
     return ok({
@@ -273,4 +273,4 @@ def api_doctors():
 
 @bp.route("/api/patients")
 def api_patients():
-    return ok({"items": patients()})
+    return ok({"items": visible_patients()})

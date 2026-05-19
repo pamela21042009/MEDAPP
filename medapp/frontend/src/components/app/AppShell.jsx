@@ -10,39 +10,39 @@ const NAV_SECTIONS = [
   {
     label: "Principal",
     items: [
-      { key: "dashboard", label: "Dashboard", kind: "react", to: "/dashboard", roles: ["admin", "doctor", "staff", "paciente"], icon: DashboardIcon },
-      { key: "agenda", label: "Agenda", kind: "react", to: "/agenda", roles: ["admin", "doctor", "staff", "secretaria", "paciente"], icon: CalendarIcon },
+      { key: "dashboard", label: "Dashboard", kind: "react", to: "/dashboard", roles: ["admin", "doctor", "paciente"], icon: DashboardIcon },
+      { key: "agenda", label: "Agenda", kind: "react", to: "/agenda", roles: ["admin", "doctor", "paciente", "secretaria"], icon: CalendarIcon },
     ],
   },
   {
     label: "Gestion",
     items: [
-      { key: "doctors", label: "Medicos", kind: "react", to: "/doctors", roles: ["admin", "doctor", "staff", "paciente"], icon: TeamIcon },
-      { key: "patients", label: "Pacientes", kind: "react", to: "/patients", roles: ["admin", "doctor", "staff", "paciente"], icon: PatientIcon },
-      { key: "catalogs", label: "Catalogos", kind: "react", to: "/catalogs", roles: ["admin", "doctor", "staff"], icon: CatalogIcon },
+      { key: "doctors", label: "Medicos", kind: "react", to: "/doctors", roles: ["admin", "doctor"], icon: TeamIcon },
+      { key: "patients", label: "Pacientes", kind: "react", to: "/patients", roles: ["admin", "doctor", "paciente"], icon: PatientIcon },
+      { key: "catalogs", label: "Catalogos", kind: "react", to: "/catalogs", roles: ["admin"], icon: CatalogIcon },
     ],
   },
   {
     label: "Clinico",
-    roles: ["doctor", "admin", "staff"],
+    roles: ["doctor", "admin", "paciente"],
     items: [
-      { key: "prescriptions", label: "Recetas", kind: "react", to: "/prescriptions", icon: FileIcon },
+      { key: "prescriptions", label: "Recetas", kind: "react", to: "/prescriptions", roles: ["doctor", "admin", "paciente"], icon: FileIcon },
       { key: "audit", label: "Auditoria", kind: "react", to: "/audit", roles: ["admin"], icon: ClipboardIcon },
     ],
   },
   {
     label: "Finanzas",
     items: [
-      { key: "schedule", label: "Horarios", kind: "react", to: "/schedule", roles: ["doctor", "admin", "staff"], icon: ClockIcon },
-      { key: "payments", label: "Pagos", kind: "react", to: "/payments", roles: ["admin", "staff", "secretaria", "doctor", "paciente"], icon: CardIcon },
-      { key: "reports", label: "Reportes", kind: "react", to: "/reports", roles: ["admin", "doctor", "staff", "paciente"], icon: ReportIcon },
+      { key: "schedule", label: "Horarios", kind: "react", to: "/schedule", roles: ["doctor", "admin"], icon: ClockIcon },
+      { key: "payments", label: "Pagos", kind: "react", to: "/payments", roles: ["admin", "doctor", "paciente", "secretaria"], icon: CardIcon },
+      { key: "reports", label: "Reportes", kind: "react", to: "/reports", roles: ["admin", "doctor", "paciente"], icon: ReportIcon },
     ],
   },
   {
     label: "Sistema",
     items: [
-      { key: "notifications", label: "Notificaciones", kind: "react", to: "/notifications", roles: ["admin", "doctor", "staff", "paciente"], icon: BellIcon },
-      { key: "settings", label: "Configuracion", kind: "react", to: "/settings", roles: ["admin", "doctor", "staff", "paciente"], icon: SettingsIcon },
+      { key: "notifications", label: "Notificaciones", kind: "react", to: "/notifications", roles: ["admin", "doctor", "paciente"], icon: BellIcon },
+      { key: "settings", label: "Configuracion", kind: "react", to: "/settings", roles: ["admin", "doctor", "paciente"], icon: SettingsIcon },
     ],
   },
 ];

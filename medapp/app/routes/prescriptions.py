@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta, timezone
 
 from flask import Blueprint, jsonify, request
 
-from .api_helpers import current_patient_id, current_user, doctors, fail, log_event, ok, patients, payload, role, select
+from .api_helpers import current_patient_id, current_user, doctors, fail, log_event, ok, patient_belongs_to_doctor, payload, role, select, visible_patients
 from app.services.database import DatabaseService
 
 bp = Blueprint("prescriptions", __name__, url_prefix="/prescriptions")
@@ -101,7 +101,7 @@ def api_bootstrap():
         "can_write": can_write_prescriptions(),
         "current_doctor_id": current_doctor_id(),
         "doctors": doctors(),
-        "patients": patients(),
+        "patients": visible_patients(),
         "medications": select("medications", "*", {"is_active": True}),
     })
 
@@ -134,6 +134,8 @@ def api_create():
         return fail("No se encontro un perfil medico asociado a tu cuenta.", 400)
     if not patient_id:
         return fail("Selecciona un paciente para crear la receta.", 400)
+    if role() == "doctor" and not patient_belongs_to_doctor(patient_id, doctor_id):
+        return fail("No puedes crear recetas para pacientes de otro medico.", 403)
 
     data = clean_prescription_payload({
         **data,

@@ -119,8 +119,12 @@ export default function PatientsPage() {
       return "Cargando pacientes...";
     }
 
+    if (bootstrap?.role === "doctor") {
+      return `${patients.length} paciente(s) asignado(s) a tu perfil.`;
+    }
+
     return `${patients.length} paciente(s) en el sistema.`;
-  }, [loading, loadingList, patients.length]);
+  }, [bootstrap?.role, loading, loadingList, patients.length]);
 
   function handleSearchSubmit(event) {
     event.preventDefault();
@@ -134,7 +138,7 @@ export default function PatientsPage() {
           <h1 className="text-[1.45rem] font-bold tracking-[-0.02em] text-med-ink">Pacientes</h1>
           <p className="mt-1 text-sm text-med-ink-muted">{subtitle}</p>
         </div>
-        {bootstrap?.can_manage ? (
+        {bootstrap?.can_create ? (
           <Link className="app-btn-violet justify-center" to="/patients/new">
             <Icon className="h-4 w-4">
               <path d="M12 5v14" />
@@ -271,7 +275,7 @@ export default function PatientsPage() {
                 <p className="mt-2 text-sm text-med-ink-muted">
                   {filters.search ? `No se encontraron resultados para "${filters.search}".` : "Registra el primer paciente para comenzar."}
                 </p>
-                {bootstrap?.can_manage ? (
+                {bootstrap?.can_create ? (
                   <Link className="app-btn-violet mt-5" to="/patients/new">
                     Registrar paciente
                   </Link>

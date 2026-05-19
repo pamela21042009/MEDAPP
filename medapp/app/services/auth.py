@@ -1,10 +1,11 @@
 from __future__ import annotations
-from typing import Optional, Dict
+
+from typing import Dict, Optional
+
 from flask import session
-import hashlib
-import os
 
 from .database import DatabaseService
+from .security import hash_password, verify_password
 
 
 class AuthService:
@@ -12,11 +13,15 @@ class AuthService:
         self._db = DatabaseService.get_instance()
 
     def login(self, email: str, password: str) -> Optional[Dict]:
-        hashed = self._hash_password(password)
-        users = self._db.select("users", "*", {"email": email, "password_hash": hashed, "is_active": True})
+        users = self._db.select("users", "*", {"email": email, "is_active": True})
         if not users:
             return None
         user = users[0]
+        valid, needs_upgrade = verify_password(password, user.get("password_hash", ""))
+        if not valid:
+            return None
+        if needs_upgrade:
+            user = self._db.update("users", {"password_hash": hash_password(password)}, {"id": user["id"]}) or user
         session["user_id"] = user["id"]
         session["user_name"] = user["full_name"]
         session["user_role"] = user["role"]
@@ -46,11 +51,6 @@ class AuthService:
         return user.get("role") in roles
 
     def register(self, data: Dict) -> Optional[Dict]:
-        data["password_hash"] = self._hash_password(data.pop("password", ""))
+        data["password_hash"] = hash_password(data.pop("password", ""))
         data["is_active"] = True
         return self._db.insert("users", data)
-
-    @staticmethod
-    def _hash_password(password: str) -> str:
-        salt = os.environ.get("PASSWORD_SALT", "medapp_salt")
-        return hashlib.sha256(f"{salt}{password}".encode()).hexdigest()

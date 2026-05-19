@@ -15,7 +15,7 @@ class DatabaseService:
     def __init__(self) -> None:
         self._client = None
         self._url = os.environ.get("SUPABASE_URL", "")
-        self._key = os.environ.get("SUPABASE_KEY", "")
+        self._key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY", "")
         self._connected = False
         self._last_error = ""
         self._select_cache: Dict[tuple, tuple[float, List[Dict]]] = {}
@@ -33,7 +33,7 @@ class DatabaseService:
             if not self._url or not self._key:
                 self._connected = False
                 self._client = None
-                self._last_error = "Faltan SUPABASE_URL o SUPABASE_KEY en el archivo .env."
+                self._last_error = "Faltan SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY o SUPABASE_KEY en el archivo .env."
                 print(f"[DatabaseService] {self._last_error}")
                 return
             from supabase import create_client

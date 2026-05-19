@@ -36,7 +36,7 @@ class EmailService:
             "use_tls": use_tls,
         }
 
-    def send(self, to_email: str, subject: str, body: str) -> bool:
+    def send(self, to_email: str, subject: str, body: str, html_body: str | None = None) -> bool:
         config = self._smtp_config()
         host = config["host"]
         username = config["username"]
@@ -53,6 +53,8 @@ class EmailService:
         if config["reply_to"]:
             message["Reply-To"] = config["reply_to"]
         message.set_content(body)
+        if html_body:
+            message.add_alternative(html_body, subtype="html")
 
         context = ssl.create_default_context()
         if config["use_ssl"]:

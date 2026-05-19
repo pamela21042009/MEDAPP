@@ -68,7 +68,7 @@ export default function PatientFormPage() {
         setBootstrap(bootstrapData);
 
         if (!editing) {
-          if (!bootstrapData?.can_manage) {
+          if (!bootstrapData?.can_create) {
             setError("No tienes permiso para registrar pacientes.");
           }
           setLoading(false);
@@ -100,7 +100,7 @@ export default function PatientFormPage() {
     };
   }, [editing, patientId]);
 
-  const canManage = Boolean(bootstrap?.can_manage);
+  const canCreate = Boolean(bootstrap?.can_create);
   const submitLabel = useMemo(() => {
     if (saving) {
       return editing ? "Guardando..." : "Registrando...";
@@ -110,7 +110,7 @@ export default function PatientFormPage() {
   }, [editing, saving]);
 
   const cancelPath = editing ? `/patients/${patientId}` : "/patients";
-  const blocked = !loading && ((editing && !permissions.can_edit) || (!editing && !canManage));
+  const blocked = !loading && ((editing && !permissions.can_edit) || (!editing && !canCreate));
 
   async function handleSubmit(event) {
     event.preventDefault();

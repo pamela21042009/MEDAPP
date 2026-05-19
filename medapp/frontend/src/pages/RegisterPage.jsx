@@ -9,8 +9,6 @@ import { getLandingPath } from "../lib/routes";
 
 const ROLE_OPTIONS = [
   { value: "paciente", label: "Paciente" },
-  { value: "medico", label: "Medico" },
-  { value: "admin", label: "Admin" },
 ];
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const FALLBACK_SPECIALTIES = [
@@ -109,14 +107,14 @@ export default function RegisterPage() {
   return (
     <AuthLayout
       title="Crear cuenta"
-      subtitle="Selecciona tu rol y completa el formulario para acceder al sistema."
-      visualTitle={<>Tu rol,<br />tu acceso.</>}
-      visualText="Cada perfil tiene permisos especificos para garantizar seguridad y eficiencia clinica."
+      subtitle="Completa tus datos para crear tu cuenta de paciente."
+      visualTitle={<>Tu salud,<br />tu acceso.</>}
+      visualText="Agenda citas, consulta tus datos y mantente conectado con tu atencion medica."
       maxWidthClass="max-w-[1080px]"
       chips={[
         { label: "Pacientes", color: "#80ED99" },
-        { label: "Medicos", color: "#FFD166" },
-        { label: "Administradores", color: "#F72585" },
+        { label: "Citas", color: "#FFD166" },
+        { label: "Seguimiento", color: "#F72585" },
       ]}
       footer={(
         <p className="text-center text-sm text-med-ink-muted">

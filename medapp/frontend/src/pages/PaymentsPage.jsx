@@ -157,7 +157,7 @@ export default function PaymentsPage() {
     }
 
     try {
-      await createPayment({
+      const result = await createPayment({
         patient_id: Number(form.patient_id),
         appointment_id: form.appointment_id ? Number(form.appointment_id) : null,
         amount: chargeAmount,
@@ -169,7 +169,15 @@ export default function PaymentsPage() {
       });
       closeCreateModal();
       await loadBootstrap();
-      setToast({ type: "success", message: "Pago registrado correctamente." });
+      setToast({
+        type: "success",
+        message:
+          form.status === "paid"
+            ? result?.receipt_email_sent
+              ? "Pago registrado y comprobante enviado al paciente."
+              : "Pago registrado. No se pudo enviar el comprobante por correo."
+            : "Pago registrado correctamente.",
+      });
     } catch (err) {
       setError(err.message || "No fue posible registrar el pago.");
       setSaving(false);
@@ -197,13 +205,18 @@ export default function PaymentsPage() {
     }
 
     try {
-      await markPaymentPaid(markPaidState.payment.id, {
+      const result = await markPaymentPaid(markPaidState.payment.id, {
         method: markPaidState.method,
         received_amount: receivedAmount,
       });
       closeMarkPaidModal();
       await loadBootstrap();
-      setToast({ type: "success", message: "Pago marcado como cobrado." });
+      setToast({
+        type: "success",
+        message: result?.receipt_email_sent
+          ? "Pago marcado como cobrado y comprobante enviado."
+          : "Pago marcado como cobrado. No se pudo enviar el comprobante por correo.",
+      });
     } catch (err) {
       setError(err.message || "No fue posible actualizar el pago.");
       setSaving(false);

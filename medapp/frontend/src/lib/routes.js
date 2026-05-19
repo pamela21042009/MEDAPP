@@ -16,10 +16,9 @@ export const APP_ROUTE_PREFIXES = [
 export function getLandingPath(role) {
   const destinations = {
     admin: "/dashboard",
-    doctor: "/doctors",
-    staff: "/agenda",
+    doctor: "/dashboard",
+    paciente: "/dashboard",
     secretaria: "/agenda",
-    paciente: "/patients",
   };
 
   return destinations[role] || "/dashboard";

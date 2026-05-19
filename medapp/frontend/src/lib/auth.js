@@ -52,3 +52,22 @@ export function updateForgottenPassword(payload) {
     body: JSON.stringify(payload),
   });
 }
+
+export function inviteDoctor(payload) {
+  return apiRequest("/auth/api/admin/doctors/invite", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function verifyDoctorInvitation(token) {
+  const query = new URLSearchParams({ token });
+  return apiRequest(`/auth/api/invitations/verify?${query.toString()}`);
+}
+
+export function acceptDoctorInvitation(payload) {
+  return apiRequest("/auth/api/invitations/accept", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}

@@ -35,6 +35,10 @@ class AppConfig:
     )
     ADMIN_REGISTER_CODE: str = os.environ.get("ADMIN_REGISTER_CODE", "ADMIN2025")
     DOCTOR_REGISTER_CODE: str = os.environ.get("DOCTOR_REGISTER_CODE", "MEDICO2025")
+    JWT_SECRET_KEY: str = os.environ.get("JWT_SECRET_KEY", SECRET_KEY)
+    JWT_ACCESS_TOKEN_MINUTES: int = int(os.environ.get("JWT_ACCESS_TOKEN_MINUTES", "60") or 60)
+    INVITE_BASE_URL: str = os.environ.get("INVITE_BASE_URL", "")
+    DOCTOR_INVITE_EXPIRE_HOURS: int = int(os.environ.get("DOCTOR_INVITE_EXPIRE_HOURS", "24") or 24)
 
 
 class DevelopmentConfig(AppConfig):

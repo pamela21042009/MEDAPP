@@ -35,11 +35,11 @@
   }
 
   .med-input {
-    @apply w-full rounded-2xl border border-med-border bg-med-input px-11 py-3 text-[15px] text-med-ink outline-none transition placeholder:text-[#AAAFCA] focus:border-med-violet focus:bg-white focus:ring-4 focus:ring-[rgba(94,96,206,0.10)];
+    @apply w-full rounded-xl border border-med-border bg-med-input px-11 py-2.5 text-[15px] text-med-ink outline-none transition placeholder:text-[#AAAFCA] focus:border-med-violet focus:bg-white focus:ring-4 focus:ring-[rgba(94,96,206,0.10)];
   }
 
   .pill-chip {
-    @apply inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/15 px-4 py-2 text-xs font-medium text-white/90 backdrop-blur-md;
+    @apply inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/15 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-md;
   }
 
   .gradient-text {

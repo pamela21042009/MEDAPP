@@ -129,6 +129,8 @@ def _apply_auth_guards(app: Flask) -> None:
         "/auth/forgot-password",
         "/auth/verify-code",
         "/auth/new-password",
+        "/auth/accept-invitation",
+        "/verify",
         "/dashboard",
         "/agenda",
         "/reports",
@@ -192,13 +194,14 @@ def _apply_auth_guards(app: Flask) -> None:
     @app.before_request
     def check_auth():
         from flask import request, redirect, url_for, session
+        from app.services.security import is_authenticated_request
         if request.method == "OPTIONS":
             return None
         if request.path == "/auth/api" or request.path.startswith("/auth/api/"):
             return None
         if request.endpoint in exempt_endpoints:
             return None
-        if "user_id" not in session:
+        if "user_id" not in session and not is_authenticated_request():
             if _is_api_path(request.path):
                 return jsonify({"error": "Sesion requerida."}), 401
             return redirect(url_for("auth.login"))

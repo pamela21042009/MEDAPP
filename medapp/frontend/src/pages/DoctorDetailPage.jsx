@@ -31,6 +31,7 @@ export default function DoctorDetailPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [working, setWorking] = useState(false);
+  const isOwnDoctorProfile = bootstrap?.role === "doctor" && String(bootstrap?.current_doctor_id || "") === String(doctor?.id || "");
 
   useEffect(() => {
     let active = true;
@@ -126,6 +127,15 @@ export default function DoctorDetailPage() {
               <p className="mt-1 text-sm text-med-ink-muted">{doctor.specialty || "Sin especialidad"}</p>
             </div>
             <div className="flex flex-wrap gap-3">
+              {isOwnDoctorProfile ? (
+                <Link className="app-btn-violet" to="/patients/new">
+                  <Icon className="h-4 w-4">
+                    <path d="M12 5v14" />
+                    <path d="M5 12h14" />
+                  </Icon>
+                  Registrar paciente
+                </Link>
+              ) : null}
               {permissions.can_edit ? (
                 <Link className="app-btn-outline" to={`/doctors/${doctor.id}/edit`}>
                   Editar

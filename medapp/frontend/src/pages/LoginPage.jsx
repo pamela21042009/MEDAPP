@@ -59,16 +59,16 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="auth-shell flex min-h-screen items-center justify-center px-5 py-8">
-      <div className="grid w-full max-w-[860px] overflow-hidden rounded-[24px] bg-white shadow-auth-card lg:grid-cols-[1.05fr_1fr]">
-        <section className="animate-slide-left bg-white px-6 py-10 sm:px-10 lg:px-12">
-          <BrandLogo containerClassName="mb-8" />
+    <main className="auth-shell flex min-h-[100dvh] items-center justify-center px-4 py-4 sm:px-5 sm:py-6">
+      <div className="grid w-full max-w-[820px] overflow-hidden rounded-[20px] bg-white shadow-auth-card lg:grid-cols-[1.05fr_1fr]">
+        <section className="animate-slide-left bg-white px-5 py-7 sm:px-8 sm:py-8 lg:px-10 lg:py-9">
+          <BrandLogo containerClassName="mb-6" />
 
-          <header className="mb-7">
-            <h1 className="font-display text-[2rem] font-bold leading-none tracking-[-0.04em] text-med-ink sm:text-[2.1rem]">
+          <header className="mb-5">
+            <h1 className="font-display text-[1.75rem] font-bold leading-tight text-med-ink sm:text-[1.95rem]">
               Bienvenido de vuelta
             </h1>
-            <p className="mt-3 max-w-md text-sm font-light leading-6 text-med-ink-muted">
+            <p className="mt-2.5 max-w-md text-sm font-light leading-5 text-med-ink-muted">
               Ingresa tus credenciales para acceder al sistema con la misma logica actual de Flask y Supabase.
             </p>
           </header>
@@ -85,7 +85,7 @@ export default function LoginPage() {
             </div>
           ) : null}
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          <form className="space-y-3" onSubmit={handleSubmit}>
             <div className="field-group relative animate-fade-up">
               <Icon className="input-icon">
                 <path d="M4 7h16" />
@@ -157,7 +157,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(105deg,#5E60CE_0%,#4EA8DE_100%)] px-5 py-3.5 font-display text-[0.95rem] font-semibold text-white shadow-auth-btn transition hover:-translate-y-0.5 hover:shadow-[0_14px_36px_rgba(94,96,206,0.46)] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
+              className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[linear-gradient(105deg,#5E60CE_0%,#4EA8DE_100%)] px-5 py-3 font-display text-[0.95rem] font-semibold text-white shadow-auth-btn transition hover:-translate-y-0.5 hover:shadow-[0_14px_36px_rgba(94,96,206,0.46)] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
             >
               <span>{submitting ? "Ingresando..." : "Iniciar sesion"}</span>
               <Icon className="h-4 w-4">
@@ -167,7 +167,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-med-ink-muted">
+          <p className="mt-5 text-center text-sm text-med-ink-muted">
             No tienes cuenta?{" "}
             <Link className="font-semibold text-med-violet transition hover:opacity-75" to="/auth/register">
               Crear cuenta
@@ -179,7 +179,7 @@ export default function LoginPage() {
           </p>
         </section>
 
-        <aside className="relative hidden overflow-hidden bg-[linear-gradient(148deg,#3A3BA0_0%,#5E60CE_30%,#4EA8DE_66%,#A0EDCE_100%)] px-8 py-10 text-white lg:flex lg:flex-col lg:justify-end lg:animate-slide-right">
+        <aside className="relative hidden overflow-hidden bg-[linear-gradient(148deg,#3A3BA0_0%,#5E60CE_30%,#4EA8DE_66%,#A0EDCE_100%)] px-8 py-8 text-white lg:flex lg:flex-col lg:justify-center lg:animate-slide-right">
           <div className="absolute -right-24 -top-24 h-[340px] w-[340px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.13)_0%,transparent_68%)]" />
           <div className="absolute -left-10 top-16 h-[190px] w-[190px] animate-float-soft rounded-full bg-[radial-gradient(circle,rgba(255,209,102,0.22)_0%,transparent_65%)]" />
           <div className="absolute -right-16 bottom-20 h-[250px] w-[250px] animate-float-soft rounded-full bg-[radial-gradient(circle,rgba(247,37,133,0.15)_0%,transparent_62%)] [animation-delay:2.2s]" />
@@ -188,7 +188,7 @@ export default function LoginPage() {
           <div className="absolute -right-16 -top-20 h-[310px] w-[310px] rounded-full border border-white/10" />
 
           <div className="relative z-10">
-            <div className="mb-7 flex flex-wrap gap-2">
+            <div className="mb-5 flex flex-wrap gap-2">
               <span className="pill-chip">
                 <span className="h-2 w-2 rounded-full bg-med-mint" />
                 Agenda en tiempo real
@@ -203,13 +203,13 @@ export default function LoginPage() {
               </span>
             </div>
 
-            <h2 className="font-display text-[2.3rem] font-extrabold leading-[1.05] tracking-[-0.04em] text-white">
+            <h2 className="font-display text-[2rem] font-extrabold leading-[1.08] text-white">
               Gestion medica
               <br />
               inteligente.
             </h2>
 
-            <p className="mt-4 max-w-[280px] text-[0.95rem] font-light leading-7 text-white/70">
+            <p className="mt-3 max-w-[280px] text-[0.9rem] font-light leading-6 text-white/70">
               Citas, pacientes y equipo medico desde un unico panel visual. React se encarga de la vista; Flask sigue mandando la logica.
             </p>
           </div>

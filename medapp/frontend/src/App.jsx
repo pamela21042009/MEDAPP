@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/app/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
+import AcceptInvitationPage from "./pages/AcceptInvitationPage";
 import AgendaPage from "./pages/AgendaPage";
 import AuditPage from "./pages/AuditPage";
 import CatalogsPage from "./pages/CatalogsPage";
@@ -37,10 +38,12 @@ export default function App() {
         <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/auth/verify-code" element={<VerifyCodePage />} />
         <Route path="/auth/new-password" element={<NewPasswordPage />} />
+        <Route path="/auth/accept-invitation" element={<AcceptInvitationPage />} />
+        <Route path="/verify" element={<AcceptInvitationPage />} />
         <Route
           path="/agenda"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin", "doctor", "paciente", "secretaria"]}>
               <AgendaPage />
             </ProtectedRoute>
           )}
@@ -48,7 +51,7 @@ export default function App() {
         <Route
           path="/doctors"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin", "doctor"]}>
               <DoctorsPage />
             </ProtectedRoute>
           )}
@@ -56,7 +59,7 @@ export default function App() {
         <Route
           path="/doctors/new"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin"]}>
               <DoctorFormPage />
             </ProtectedRoute>
           )}
@@ -64,7 +67,7 @@ export default function App() {
         <Route
           path="/doctors/:doctorId/edit"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin", "doctor"]}>
               <DoctorFormPage />
             </ProtectedRoute>
           )}
@@ -72,7 +75,7 @@ export default function App() {
         <Route
           path="/doctors/:doctorId"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin", "doctor"]}>
               <DoctorDetailPage />
             </ProtectedRoute>
           )}
@@ -80,7 +83,7 @@ export default function App() {
         <Route
           path="/patients"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin", "doctor", "paciente"]}>
               <PatientsPage />
             </ProtectedRoute>
           )}
@@ -88,7 +91,7 @@ export default function App() {
         <Route
           path="/patients/new"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin"]}>
               <PatientFormPage />
             </ProtectedRoute>
           )}
@@ -96,7 +99,7 @@ export default function App() {
         <Route
           path="/patients/:patientId/edit"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin", "doctor"]}>
               <PatientFormPage />
             </ProtectedRoute>
           )}
@@ -104,7 +107,7 @@ export default function App() {
         <Route
           path="/patients/:patientId"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin", "doctor", "paciente"]}>
               <PatientDetailPage />
             </ProtectedRoute>
           )}
@@ -112,7 +115,7 @@ export default function App() {
         <Route
           path="/prescriptions"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin", "doctor", "paciente"]}>
               <PrescriptionsPage />
             </ProtectedRoute>
           )}
@@ -120,7 +123,7 @@ export default function App() {
         <Route
           path="/prescriptions/create"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin", "doctor"]}>
               <PrescriptionCreatePage />
             </ProtectedRoute>
           )}
@@ -128,7 +131,7 @@ export default function App() {
         <Route
           path="/prescriptions/:rxId"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin", "doctor", "paciente"]}>
               <PrescriptionDetailPage />
             </ProtectedRoute>
           )}
@@ -136,7 +139,7 @@ export default function App() {
         <Route
           path="/payments"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin", "doctor", "paciente", "secretaria"]}>
               <PaymentsPage />
             </ProtectedRoute>
           )}
@@ -144,7 +147,7 @@ export default function App() {
         <Route
           path="/payments/:paymentId/receipt"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin", "doctor", "paciente", "secretaria"]}>
               <PaymentReceiptPage />
             </ProtectedRoute>
           )}
@@ -152,7 +155,7 @@ export default function App() {
         <Route
           path="/reports"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin", "doctor", "paciente"]}>
               <ReportsPage />
             </ProtectedRoute>
           )}
@@ -160,7 +163,7 @@ export default function App() {
         <Route
           path="/schedule"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin", "doctor"]}>
               <SchedulePage />
             </ProtectedRoute>
           )}
@@ -168,7 +171,7 @@ export default function App() {
         <Route
           path="/dashboard"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin", "doctor", "paciente"]}>
               <DashboardPage />
             </ProtectedRoute>
           )}
@@ -176,7 +179,7 @@ export default function App() {
         <Route
           path="/settings"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin", "doctor", "paciente"]}>
               <SettingsPage />
             </ProtectedRoute>
           )}
@@ -184,7 +187,7 @@ export default function App() {
         <Route
           path="/notifications"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin", "doctor", "paciente"]}>
               <NotificationsPage />
             </ProtectedRoute>
           )}
@@ -192,7 +195,7 @@ export default function App() {
         <Route
           path="/audit"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin"]}>
               <AuditPage />
             </ProtectedRoute>
           )}
@@ -200,7 +203,7 @@ export default function App() {
         <Route
           path="/catalogs"
           element={(
-            <ProtectedRoute>
+            <ProtectedRoute roles={["admin"]}>
               <CatalogsPage />
             </ProtectedRoute>
           )}
