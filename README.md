@@ -310,4 +310,3 @@ Proyecto desarrollado como sistema academico/profesional para la gestion de cita
 - Responsable proyecto: Jose Rijo
 - Fecha de documentacion:  30 abril de 2026.
 
-gracia
