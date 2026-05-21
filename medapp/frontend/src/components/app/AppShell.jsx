@@ -18,7 +18,7 @@ const NAV_SECTIONS = [
     label: "Gestion",
     items: [
       { key: "doctors", label: "Medicos", kind: "react", to: "/doctors", roles: ["admin", "doctor"], icon: TeamIcon },
-      { key: "patients", label: "Pacientes", kind: "react", to: "/patients", roles: ["admin", "doctor", "paciente"], icon: PatientIcon },
+      { key: "patients", label: "Pacientes", kind: "react", to: "/patients", roles: ["admin", "doctor", "staff", "secretaria", "paciente"], icon: PatientIcon },
       { key: "catalogs", label: "Catalogos", kind: "react", to: "/catalogs", roles: ["admin"], icon: CatalogIcon },
     ],
   },

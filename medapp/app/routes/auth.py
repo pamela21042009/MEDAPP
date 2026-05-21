@@ -323,6 +323,33 @@ def _upsert_doctor_profile(user: dict, data: dict) -> dict | None:
     return database.insert("doctors", profile)
 
 
+def _upsert_patient_profile(user: dict, data: dict, full_name: str, email: str) -> dict | None:
+    database = DatabaseService.get_instance()
+    profile = {
+        "user_id": user.get("id"),
+        "full_name": full_name,
+        "email": email,
+        "phone": data.get("phone") or "",
+    }
+    by_user = select("patients", "*", {"user_id": user.get("id")}) if user.get("id") else []
+    existing = by_user or select("patients", "*", {"email": email})
+    if existing:
+        current = existing[0]
+        update_data = {
+            "user_id": user.get("id"),
+            "email": email,
+            "full_name": current.get("full_name") or full_name,
+        }
+        if data.get("phone") and not current.get("phone"):
+            update_data["phone"] = data.get("phone")
+        return database.update("patients", update_data, {"id": current.get("id")})
+
+    patient = database.insert("patients", profile)
+    if patient:
+        return patient
+    return database.insert("patients", {key: value for key, value in profile.items() if key != "user_id"})
+
+
 @bp.route("/")
 @bp.route("/login", methods=["GET"])
 def login():
@@ -410,18 +437,9 @@ def api_register():
         return fail("No fue posible crear la cuenta. Verifica que ejecutaste la migracion SQL de autenticacion.", 500)
 
     if current_role == "paciente":
-        patient_data = {
-            "user_id": user.get("id"),
-            "full_name": full_name,
-            "email": email,
-            "phone": data.get("phone") or "",
-        }
-        patient = DatabaseService.get_instance().insert("patients", patient_data)
-        if not patient:
-            DatabaseService.get_instance().insert(
-                "patients",
-                {key: value for key, value in patient_data.items() if key != "user_id"},
-            )
+        patient = _upsert_patient_profile(user, data, full_name, email)
+        if patient:
+            log_event("patient_user_linked", "patients", patient.get("id"), {"user_id": user.get("id")})
 
     log_event("register", "users", user.get("id"), {"role": current_role})
     try:

@@ -255,6 +255,24 @@ export default function PatientDetailPage() {
   }, [patientId]);
 
   useEffect(() => {
+    if (bootstrap?.role !== "paciente") {
+      return undefined;
+    }
+
+    function refreshPatientView() {
+      loadDetail(false);
+    }
+
+    window.addEventListener("focus", refreshPatientView);
+    const intervalId = window.setInterval(refreshPatientView, 30000);
+
+    return () => {
+      window.removeEventListener("focus", refreshPatientView);
+      window.clearInterval(intervalId);
+    };
+  }, [bootstrap?.role, patientId]);
+
+  useEffect(() => {
     setNoteDrafts(
       Object.fromEntries(
         history.map((appointment) => [appointment.id, appointment.notes || ""]),

@@ -80,18 +80,51 @@ def current_doctor_id() -> int | None:
 
 def current_patient_id() -> int | None:
     user = current_user()
-    if user.get("id"):
-        rows = select("patients", "id,user_id,email", {"user_id": user["id"]})
-        if rows:
-            return rows[0].get("id")
+    candidates: list[dict[str, Any]] = []
+
+    def add_candidates(rows: list[dict[str, Any]]) -> None:
+        seen_ids = {str(item.get("id") or "") for item in candidates}
+        for row in rows:
+            row_id = str(row.get("id") or "")
+            if row_id and row_id not in seen_ids:
+                candidates.append(row)
+                seen_ids.add(row_id)
+
     if user.get("email"):
-        rows = select("patients", "id,user_id,email", {"email": user["email"]})
-        if rows:
-            return rows[0].get("id")
-        rows = select("patients", "id,email", {"email": user["email"]})
-        if rows:
-            return rows[0].get("id")
-    return None
+        email = str(user["email"]).strip()
+        normalized_email = email.lower()
+        add_candidates(select("patients", "id,user_id,email,full_name,phone,birth_date,gender,address,blood_type,allergies,insurance_number,avatar_url", {"email": normalized_email}))
+        if email != normalized_email:
+            add_candidates(select("patients", "id,user_id,email,full_name,phone,birth_date,gender,address,blood_type,allergies,insurance_number,avatar_url", {"email": email}))
+    if user.get("id"):
+        add_candidates(select("patients", "id,user_id,email,full_name,phone,birth_date,gender,address,blood_type,allergies,insurance_number,avatar_url", {"user_id": user["id"]}))
+
+    if not candidates:
+        return None
+
+    def related_count(patient_id: Any) -> int:
+        return sum(
+            len(select(table, "id", {"patient_id": patient_id}))
+            for table in ("appointments", "medical_history", "vital_signs", "patient_documents", "payments", "prescriptions")
+        )
+
+    def profile_count(patient: dict[str, Any]) -> int:
+        fields = ("phone", "birth_date", "gender", "address", "blood_type", "allergies", "insurance_number", "avatar_url")
+        return sum(1 for field in fields if patient.get(field))
+
+    def patient_score(patient: dict[str, Any]) -> tuple[int, int, int]:
+        return (
+            related_count(patient.get("id")),
+            profile_count(patient),
+            1 if str(patient.get("user_id") or "") == str(user.get("id") or "") else 0,
+        )
+
+    selected = max(candidates, key=patient_score)
+    if user.get("id") and str(selected.get("user_id") or "") != str(user["id"]):
+        linked = update("patients", selected.get("id"), {"user_id": user["id"]})
+        if linked:
+            selected = linked
+    return selected.get("id")
 
 
 def role() -> str:

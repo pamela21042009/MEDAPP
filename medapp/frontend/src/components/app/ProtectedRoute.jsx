@@ -31,7 +31,7 @@ export default function ProtectedRoute({ children, roles = [] }) {
 
   if (
     user.role === "secretaria" &&
-    !["/agenda", "/payments"].some((path) => location.pathname === path || location.pathname.startsWith(`${path}/`))
+    !["/agenda", "/payments", "/patients"].some((path) => location.pathname === path || location.pathname.startsWith(`${path}/`))
   ) {
     return <Navigate to={getLandingPath(user.role)} replace />;
   }

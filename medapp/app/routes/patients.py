@@ -38,6 +38,39 @@ PATIENT_COLUMNS = {
 }
 
 
+def patient_user_for_email(email: str | None) -> dict | None:
+    normalized = str(email or "").strip().lower()
+    if not normalized:
+        return None
+
+    for candidate in (normalized, str(email or "").strip()):
+        if not candidate:
+            continue
+        rows = select("users", "id,email,role,full_name", {"email": candidate})
+        user = rows[0] if rows else None
+        if user and user.get("role") == "paciente":
+            return user
+    return None
+
+
+def sync_patient_user_link(patient: dict | None) -> dict | None:
+    if not patient:
+        return patient
+
+    user = patient_user_for_email(patient.get("email"))
+    if not user:
+        return patient
+
+    if str(patient.get("user_id") or "") == str(user.get("id") or ""):
+        return patient
+
+    linked = update("patients", patient.get("id"), {"user_id": user.get("id")})
+    if linked:
+        log_event("patient_user_linked", "patients", patient.get("id"), {"user_id": user.get("id")})
+        return linked
+    return patient
+
+
 def can_manage_patients() -> bool:
     return role() in {"admin", "staff", "secretaria", "doctor"}
 
@@ -123,9 +156,6 @@ def patient_payload(item: dict) -> dict:
             entry for entry in clinical_history
             if str(entry.get("doctor_id") or "") == str(doctor_id)
         ]
-
-    if not clinical_history and patient_id and role() != "doctor":
-        clinical_history = select("clinical_history", "*", {"patient_id": patient_id})
 
     return {
         "patient": item,
@@ -290,6 +320,7 @@ def api_create():
             + (f" Detalle: {detail}" if detail else ""),
             500,
         )
+    item = sync_patient_user_link(item)
     log_event("create", "patients", item.get("id"))
     return ok(item)
 
@@ -304,6 +335,7 @@ def api_update(patient_id: int):
     if not item:
         detail = db().get_last_error()
         return fail(f"No fue posible actualizar el paciente. Detalle: {detail}" if detail else "No fue posible actualizar el paciente.", 500)
+    item = sync_patient_user_link(item)
     log_event("update", "patients", patient_id)
     return ok(item)
 
